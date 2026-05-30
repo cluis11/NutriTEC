@@ -1,0 +1,85 @@
+############################################
+# 🔷 .NET / C#
+############################################
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.publish/
+publish/
+
+# Archivos compilados
+*.dll
+*.exe
+*.pdb
+
+# Configuración local con connection strings
+appsettings.Development.json
+appsettings.local.json
+
+############################################
+# 🔷 React / Node.js
+############################################
+node_modules/
+dist/
+build/
+/.pnp
+.pnp.js
+/coverage
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+############################################
+# 🔷 Variables de entorno
+############################################
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+############################################
+# 🔷 React Native / Expo
+############################################
+.expo/
+.expo-shared/
+
+# Android
+android/build/
+android/app/build/
+
+# iOS
+ios/build/
+ios/Pods/
+ios/DerivedData/
+
+############################################
+# 🔷 Azure
+############################################
+.azure/
+*.pubxml
+*.pubxml.user
+
+############################################
+# 🔷 IDEs
+############################################
+.vscode/
+.idea/
+
+############################################
+# 🔷 Logs generales
+############################################
+*.log
+logs/
+
+############################################
+# 🔷 Sistema Operativo
+############################################
+.DS_Store
+Thumbs.db
