@@ -1,8 +1,11 @@
 -- ============================================================
 -- NutriTEC - Script 01: Estructura de la base de datos
--- Ejecutar conectado a la BD "nutritec_db"
+-- Ejecutar como sa
 -- Motor: SQL Server
 -- ============================================================
+
+USE nutritec_db;
+GO
 
 -- ------------------------------------------------------------
 -- USUARIOS
@@ -17,7 +20,7 @@ CREATE TABLE Usuario (
     Ap2             NVARCHAR(50),
     Fecha_nacimiento DATE           NOT NULL,
     Peso            DECIMAL(5,2)    NOT NULL,
-    IMC             DECIMAL(5,2)    NOT NULL
+    Altura          DECIMAL(5,2)    NOT NULL
 );
 
 CREATE TABLE Admin (
@@ -80,6 +83,7 @@ CREATE TABLE Medida (
 
 CREATE TABLE Producto (
     id_producto     INT             IDENTITY(1,1) PRIMARY KEY,
+    id_usuario      INT             NOT NULL,
     Codigo          VARCHAR(50)     UNIQUE NOT NULL,
     Descripcion     NVARCHAR(200)   NOT NULL,
     Tamano          DECIMAL(7,2)    NOT NULL,
@@ -89,11 +93,20 @@ CREATE TABLE Producto (
     Sodio           DECIMAL(7,2)    NOT NULL,
     Carbohidratos   DECIMAL(7,2)    NOT NULL,
     Proteina        DECIMAL(7,2)    NOT NULL,
-    Vitaminas       VARCHAR(200),
     Calcio          DECIMAL(7,2)    NOT NULL,
     Hierro          DECIMAL(7,2)    NOT NULL,
     Estado          VARCHAR(10)     NOT NULL DEFAULT 'pendiente'
-                        CHECK (Estado IN ('pendiente', 'aprobado'))
+                        CHECK (Estado IN ('pendiente', 'aprobado')),
+    CONSTRAINT FK_Producto_Usuario
+        FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+
+CREATE TABLE VitaminasxProducto (
+    id_producto     INT             NOT NULL,
+    Vitamina        NVARCHAR(50)    NOT NULL,
+    PRIMARY KEY (id_producto, Vitamina),
+    CONSTRAINT FK_VxP_Producto
+        FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
 
 -- ------------------------------------------------------------
