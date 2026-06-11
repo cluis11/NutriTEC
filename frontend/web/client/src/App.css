@@ -1,0 +1,9 @@
+@media (min-width: 992px) {
+  .style-lg-height {
+    height: calc(100vh - 30px) !important;
+  }
+  
+  .calendar-container {
+    overflow: hidden !important;
+  }
+}
