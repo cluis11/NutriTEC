@@ -73,15 +73,16 @@ namespace NutriTEC.API.Data.Repositories
             return count > 0;
         }
 
-        public async Task<bool> EsAdmin(string correo)
+        public async Task<bool> EsAdmin(string correo, string contrasena)
         {
             using var connection = _db.GetConnection();
             await connection.OpenAsync();
 
-            var query = "SELECT COUNT(*) FROM Admin WHERE Correo = @correo";
+            var query = "SELECT COUNT(*) FROM Admin WHERE Correo = @correo AND Contrasena = @contrasena";
 
             using var command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@correo", correo);
+            command.Parameters.AddWithValue("@contrasena", contrasena);
 
             var count = (int)await command.ExecuteScalarAsync();
             return count > 0;
@@ -110,8 +111,7 @@ namespace NutriTEC.API.Data.Repositories
                     Nombre = reader.GetString(1)
                 };
             }
-
-            throw new InvalidOperationException("No se encontró un plan activo para el cliente especificado.");
+            return null;
         }
     }
 }
