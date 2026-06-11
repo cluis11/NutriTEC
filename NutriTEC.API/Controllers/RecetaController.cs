@@ -1,0 +1,39 @@
+using Microsoft.AspNetCore.Mvc;
+using NutriTEC.API.Models;
+using NutriTEC.API.Services;
+
+namespace NutriTEC.API.Controllers
+{
+    [ApiController]
+    [Route("api/receta")]
+    public class RecetaController : ControllerBase
+    {
+        private readonly RecetaService _recetaService;
+
+        public RecetaController(RecetaService recetaService)
+        {
+            _recetaService = recetaService;
+        }
+
+        [HttpPost]
+        public Task<IActionResult> CrearReceta([FromBody] Receta receta) => throw new NotImplementedException();
+
+        [HttpGet("{id}")]
+        public Task<IActionResult> ObtenerReceta(int id) => throw new NotImplementedException();
+
+        [HttpGet("cliente/{id}")]
+        public Task<IActionResult> ObtenerRecetasPorCliente(int id) => throw new NotImplementedException();
+
+        [HttpPost("{id}/producto")]
+        public Task<IActionResult> AgregarProducto(int id, [FromBody] ProductoxReceta producto) => throw new NotImplementedException();
+
+        [HttpDelete("{id}/producto/{id_producto}")]
+        public Task<IActionResult> EliminarProductoDeReceta(int id, int id_producto) => throw new NotImplementedException();
+
+        [HttpPut("{id}")]
+        public Task<IActionResult> ActualizarNombreReceta(int id, [FromBody] object request) => throw new NotImplementedException();
+
+        [HttpDelete("{id}")]
+        public Task<IActionResult> EliminarReceta(int id) => throw new NotImplementedException();
+    }
+}
