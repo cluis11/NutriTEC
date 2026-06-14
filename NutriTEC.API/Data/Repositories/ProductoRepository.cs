@@ -13,7 +13,6 @@ namespace NutriTEC.API.Data.Repositories
             _db = db;
         }
 
-        public Task<Producto> ObtenerProducto(int id) => throw new NotImplementedException();
         public Task<List<Producto>> ObtenerProductos() => throw new NotImplementedException();
         public Task<List<Producto>> ObtenerProductosAprobados() => throw new NotImplementedException();
         public Task<bool> CodigoExiste(string codigo) => throw new NotImplementedException();
@@ -80,6 +79,45 @@ namespace NutriTEC.API.Data.Repositories
 
             var id = (int)await command.ExecuteScalarAsync();
             return id;
+        }
+
+        public async Task<Producto?> ObtenerProducto(int id)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                SELECT *
+                FROM Producto
+                WHERE id_producto = @id";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return new Producto
+                {
+                    Id_producto = reader.GetInt32(reader.GetOrdinal("id_producto")),
+                    Id_usuario = reader.GetInt32(reader.GetOrdinal("id_usuario")),
+                    Codigo = reader.GetString(reader.GetOrdinal("Codigo")),
+                    Descripcion = reader.GetString(reader.GetOrdinal("Descripcion")),
+                    Tamano = reader.GetDecimal(reader.GetOrdinal("Tamano")),
+                    Porcion = reader.GetDecimal(reader.GetOrdinal("Porcion")),
+                    Energia = reader.GetDecimal(reader.GetOrdinal("Energia")),
+                    Grasa = reader.GetDecimal(reader.GetOrdinal("Grasa")),
+                    Sodio = reader.GetDecimal(reader.GetOrdinal("Sodio")),
+                    Carbohidratos = reader.GetDecimal(reader.GetOrdinal("Carbohidratos")),
+                    Proteina = reader.GetDecimal(reader.GetOrdinal("Proteina")),
+                    Calcio = reader.GetDecimal(reader.GetOrdinal("Calcio")),
+                    Hierro = reader.GetDecimal(reader.GetOrdinal("Hierro")),
+                    Estado = reader.GetString(reader.GetOrdinal("Estado"))
+                };
+            }
+
+            return null;
         }
     }
 }

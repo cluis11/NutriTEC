@@ -34,7 +34,20 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public Task<IActionResult> ObtenerProducto(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerProducto(int id)
+        {
+            var producto = await _productoService.ObtenerProducto(id);
+
+            if (producto == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Producto no encontrado."
+                });
+            }
+
+            return Ok(producto);
+        }
 
         [HttpGet]
         public Task<IActionResult> ObtenerProductos() => throw new NotImplementedException();
