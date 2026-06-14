@@ -12,7 +12,28 @@ namespace NutriTEC.API.Services
             _productoRepository = productoRepository;
         }
 
-        public Task<int> CrearProducto(Producto producto) => throw new NotImplementedException();
+        public async Task<int> CrearProducto(Producto producto)
+        {
+            if (producto == null)
+                throw new ArgumentException("El producto es obligatorio.");
+
+            if (producto.Id_usuario <= 0)
+                throw new ArgumentException("El usuario es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(producto.Codigo))
+                throw new ArgumentException("El código es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(producto.Descripcion))
+                throw new ArgumentException("La descripción es obligatoria.");
+
+            if (producto.Tamano <= 0 || producto.Porcion <= 0)
+                throw new ArgumentException("El tamaño y la porción deben ser mayores a cero.");
+
+            producto.Estado = "pendiente";
+
+            return await _productoRepository.CrearProducto(producto);
+        }
+        
         public Task<Producto> ObtenerProducto(int id) => throw new NotImplementedException();
         public Task<List<Producto>> ObtenerProductos() => throw new NotImplementedException();
         public Task<List<Producto>> ObtenerProductosAprobados() => throw new NotImplementedException();
