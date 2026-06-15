@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import '../App.css';  
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Productos from './Productos';
+
 
 const ClientMain = () => {
   // DATOS SIMULADOS DE COMIDAS PARA DISPLAY EN CALENDARIO
@@ -15,6 +18,7 @@ const ClientMain = () => {
   const [alimentoNuevo, setAlimentoNuevo] = useState('');
   const [tiempoComida, setTiempoComida] = useState('Desayuno');
   const [caloriasTotales, setCaloriasTotales] = useState(0);
+  const [vistaActual, setVistaActual] = useState("calendario");
 
   // Lógica para fechas en el calendario 
   const [fechaPivote, setFechaPivote] = useState(new Date(2026, 5, 1)); 
@@ -57,6 +61,21 @@ const ClientMain = () => {
   const mesEncabezado = nombresMeses[diasDeEstaSemana[0].getMonth()];
   const añoEncabezado = diasDeEstaSemana[0].getFullYear();
 
+  if (vistaActual === "productos") {
+  return (
+    <div className="container-fluid py-4">
+      <button 
+        className="btn btn-outline-secondary mb-3"
+        onClick={() => setVistaActual("calendario")}
+      >
+        Volver al calendario
+      </button>
+
+      <Productos />
+    </div>
+  );
+}
+
   // IMPLEMENTAR LOGICA DE LOG COMIDA
   const handleRegistrarComida = (e) => {
     e.preventDefault();
@@ -84,7 +103,10 @@ const ClientMain = () => {
                 <button className="list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100" onClick={() => alert("Abriendo Catálogo: Gestión de Recetas...")}>
                   <span>Gestión de Recetas</span>
                 </button>
-                <button className="list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100" onClick={() => alert("Abriendo Catálogo: Gestión de Productos...")}>
+                <button 
+                  className="list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100" 
+                  onClick={() => setVistaActual("productos")}
+                >
                   <span>Gestión de Productos</span>
                 </button>
                 <button className="list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100" onClick={() => alert("Generando PDF de Avance...")}>
