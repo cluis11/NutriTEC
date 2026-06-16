@@ -16,7 +16,18 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpPost]
-        public Task<IActionResult> CrearPlan([FromBody] PlanAlimentacion plan) => throw new NotImplementedException();
+        public async Task<IActionResult> CrearPlan([FromBody] PlanAlimentacion plan)
+        {
+            try
+            {
+                await _planService.CrearPlan(plan);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpGet("{id}")]
         public Task<IActionResult> ObtenerPlan(int id) => throw new NotImplementedException();

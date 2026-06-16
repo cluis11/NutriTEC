@@ -15,10 +15,14 @@ namespace NutriTEC.API.Services
             _productoRepository = productoRepository;
         }
 
-        public Task<int> CrearPlan(PlanAlimentacion plan) => throw new NotImplementedException();
+        public async Task CrearPlan(PlanAlimentacion plan)
+        {
+            int id_plan = await _planRepository.CrearPlan(plan);
+            await _planRepository.AgregarProducto(id_plan, plan.Productos);
+        }
         public Task<PlanAlimentacion> ObtenerPlan(int id) => throw new NotImplementedException();
         public Task<List<PlanResumenDTO>> ObtenerPlanesPorNutricionista(int id_nutricionista) => throw new NotImplementedException();
-        public Task AgregarProducto(int id_plan, ProductoxPlan producto) => throw new NotImplementedException();
+        //public Task AgregarProducto(int id_plan, ProductoxPlan producto) => throw new NotImplementedException();
         public Task EliminarProductoDePlan(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
         public Task ActualizarNombrePlan(int id, string nombre) => throw new NotImplementedException();
         public Task EliminarPlan(int id) => throw new NotImplementedException();
