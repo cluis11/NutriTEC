@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';  
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Productos from './Productos';
 
 // ==========================================
 // Importamos los módulos de cada seccion
 // ==========================================
+import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
 // import GestionRecetas from './GestionRecetas';
-import productos from './Productos';
-// import ReporteAvance from './ReporteAvance';
+import ReporteAvance from './reporte';
 
 const ClientMain = () => {
   const navigate = useNavigate();
@@ -119,8 +118,8 @@ const ClientMain = () => {
                 </button>
                 
                 <button 
-                  className={`list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100 ${vistaActiva === 'avance' ? 'active' : ''}`} 
-                  onClick={() => setVistaActiva('avance')}
+                  className={`list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100 ${vistaActiva === 'reporte' ? 'active' : ''}`} 
+                  onClick={() => setVistaActiva('reporte')}
                 >
                   <span>Reporte de Avance</span>
                 </button>
@@ -213,7 +212,7 @@ const ClientMain = () => {
           </div>
         )}
 
-        {/* Log diario (Solo visible en 'dashboard') */}
+        {/* Log diario */}
         {vistaActiva === 'dashboard' && (
           <div className="col-12 col-md-6 col-lg-3 mx-auto mx-lg-0">
             <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
@@ -262,13 +261,10 @@ const ClientMain = () => {
             </button>
 
             {vistaActiva === 'medida' && <RegistroMedidas />}
-            
-            {/* Renderizado real de tu componente de Productos */}
             {vistaActiva === 'productos' && <Productos />}
-
+            {vistaActiva === 'reporte' && <ReporteAvance />}
             {/* Marcadores provisionales para las vistas que quedan por hacer */}
             {vistaActiva === 'recetas' && <div className="card p-4"><h3>Gestión de Recetas</h3></div>}
-            {vistaActiva === 'avance' && <div className="card p-4"><h3>Reporte de Avance</h3></div>}
           </div>
         )}
 

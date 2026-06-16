@@ -38,36 +38,31 @@ namespace NutriTEC.API.Data.Repositories
 
         // Obtiene todas las medidas registradas por un usuario
         public async Task<List<Medida>> ObtenerPorUsuario(int idUsuario)
-        {
+{
             var lista = new List<Medida>();
 
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
-            using var cmd = new SqlCommand(
-                "SELECT * FROM medida WHERE id_usuario = @id", conn);
-            // Filtrar por usuario
+            using var cmd = new SqlCommand("SELECT * FROM medida WHERE id_usuario = @id", conn);
             cmd.Parameters.AddWithValue("id", idUsuario);
 
             using var reader = await cmd.ExecuteReaderAsync();
 
+            // UN SOLO WHILE controla la lectura secuencial de filas
             while (await reader.ReadAsync())
             {
-                // Convierte cada registro en un objeto Medida
-                while (await reader.ReadAsync())
+                lista.Add(new Medida
                 {
-                    lista.Add(new Medida
-                    {
-                        Id_medida = Convert.ToInt32(reader["id_medida"]),
-                        Id_usuario = Convert.ToInt32(reader["id_usuario"]),
-                        Fecha = Convert.ToDateTime(reader["fecha"]),
-                        Cintura = Convert.ToDecimal(reader["cintura"]),
-                        Cuello = Convert.ToDecimal(reader["cuello"]),
-                        Caderas = Convert.ToDecimal(reader["caderas"]),
-                        P_musculo = Convert.ToDecimal(reader["p_musculo"]),
-                        P_grasa = Convert.ToDecimal(reader["p_grasa"])
-                    });
-                }
+                    Id_medida = Convert.ToInt32(reader["id_medida"]),
+                    Id_usuario = Convert.ToInt32(reader["id_usuario"]),
+                    Fecha = Convert.ToDateTime(reader["fecha"]),
+                    Cintura = Convert.ToDecimal(reader["cintura"]),
+                    Cuello = Convert.ToDecimal(reader["cuello"]),
+                    Caderas = Convert.ToDecimal(reader["caderas"]),
+                    P_musculo = Convert.ToDecimal(reader["p_musculo"]),
+                    P_grasa = Convert.ToDecimal(reader["p_grasa"])
+                });
             }
 
             return lista;
