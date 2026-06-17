@@ -64,5 +64,27 @@ namespace NutriTEC.API.Controllers
 
         [HttpDelete("{id}")]
         public Task<IActionResult> EliminarProducto(int id) => throw new NotImplementedException();
+
+        [HttpPut("{id}/aprobar")]
+        public async Task<IActionResult> AprobarProducto(int id)
+        {
+            try
+            {
+                await _productoService.AprobarProducto(id);
+
+                return Ok(new
+                {
+                    mensaje = "Producto aprobado correctamente."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al aprobar producto.",
+                    detalle = ex.Message
+                });
+            }
+        }
     }
 }

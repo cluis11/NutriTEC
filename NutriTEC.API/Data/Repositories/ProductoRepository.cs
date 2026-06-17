@@ -1,6 +1,7 @@
 using NutriTEC.API.Data.Connection;
 using NutriTEC.API.Models;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace NutriTEC.API.Data.Repositories
 {
@@ -18,7 +19,19 @@ namespace NutriTEC.API.Data.Repositories
         public Task ActualizarProducto(Producto producto) => throw new NotImplementedException();
         public Task EliminarProducto(int id) => throw new NotImplementedException();
         public Task<bool> EstaEnUso(int id) => throw new NotImplementedException();
-        public Task AprobarProducto(int id) => throw new NotImplementedException();
+        
+        public async Task AprobarProducto(int id)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            using var command = new SqlCommand("sp_AprobarProducto", connection);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.AddWithValue("@id_producto", id);
+
+            await command.ExecuteNonQueryAsync();
+        }
 
         public async Task<int> CrearProducto(Producto producto)
         {

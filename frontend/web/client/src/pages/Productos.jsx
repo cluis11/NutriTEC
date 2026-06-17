@@ -150,7 +150,13 @@ function Productos() {
   }
 
   return (
-    <div className="container-fluid py-4">
+    <div
+      className="container-fluid py-4"
+      style={{
+        height: "100vh",
+        overflowY: "auto"
+      }}
+    >
       <h1 className="mb-4">Gestión de Productos</h1>
 
       <div className="row g-4">
@@ -202,9 +208,22 @@ function Productos() {
             {productos.length === 0 ? (
               <p>No hay productos registrados.</p>
             ) : (
-              <div className="table-responsive">
+              <div
+                className="table-responsive"
+                style={{
+                  maxHeight: "500px",
+                  overflowY: "auto"
+                }}
+              >
                 <table className="table table-hover align-middle">
-                  <thead>
+                  <thead
+                    className="table-light"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 1
+                    }}
+                  >
                     <tr>
                       <th>ID</th>
                       <th>Código</th>
