@@ -49,4 +49,5 @@ namespace NutriTEC.API.Services
         public Task EliminarProducto(int id) => throw new NotImplementedException();
         public Task AprobarProducto(int id) => throw new NotImplementedException();
     }
+    
 }
