@@ -16,10 +16,48 @@ namespace NutriTEC.API.Data.Repositories
 
         public Task<List<Producto>> ObtenerProductosAprobados() => throw new NotImplementedException();
         public Task<bool> CodigoExiste(string codigo) => throw new NotImplementedException();
-        public Task ActualizarProducto(Producto producto) => throw new NotImplementedException();
         public Task EliminarProducto(int id) => throw new NotImplementedException();
         public Task<bool> EstaEnUso(int id) => throw new NotImplementedException();
-        
+
+        public async Task ActualizarProducto(int id, Producto producto)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                UPDATE Producto
+                SET
+                    Codigo = @codigo,
+                    Descripcion = @descripcion,
+                    Tamano = @tamano,
+                    Porcion = @porcion,
+                    Energia = @energia,
+                    Grasa = @grasa,
+                    Sodio = @sodio,
+                    Carbohidratos = @carbohidratos,
+                    Proteina = @proteina,
+                    Calcio = @calcio,
+                    Hierro = @hierro
+                WHERE id_producto = @id_producto";
+
+            using var command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("@id_producto", id);
+            command.Parameters.AddWithValue("@codigo", producto.Codigo);
+            command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
+            command.Parameters.AddWithValue("@tamano", producto.Tamano);
+            command.Parameters.AddWithValue("@porcion", producto.Porcion);
+            command.Parameters.AddWithValue("@energia", producto.Energia);
+            command.Parameters.AddWithValue("@grasa", producto.Grasa);
+            command.Parameters.AddWithValue("@sodio", producto.Sodio);
+            command.Parameters.AddWithValue("@carbohidratos", producto.Carbohidratos);
+            command.Parameters.AddWithValue("@proteina", producto.Proteina);
+            command.Parameters.AddWithValue("@calcio", producto.Calcio);
+            command.Parameters.AddWithValue("@hierro", producto.Hierro);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
         public async Task AprobarProducto(int id)
         {
             using var connection = _db.GetConnection();
