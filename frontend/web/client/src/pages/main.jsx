@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // ==========================================
 import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
-// import GestionRecetas from './GestionRecetas';
+import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
 
 const ClientMain = () => {
@@ -454,8 +454,7 @@ const handleRegistrarComida = async (e) => {
             {vistaActiva === 'medida' && <RegistroMedidas />}
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
-            {/* FALTAAA */}
-            {vistaActiva === 'recetas' && <div className="card p-4"><h3>Gestión de Recetas</h3></div>}
+            {vistaActiva === 'recetas' && <GestionRecetas />}
           </div>
         )}
 

@@ -44,9 +44,36 @@ namespace NutriTEC.API.Services
             return await _productoRepository.ObtenerProductos();
         }
         
-        public Task<List<Producto>> ObtenerProductosAprobados() => throw new NotImplementedException();
-        public Task ActualizarProducto(int id, Producto producto) => throw new NotImplementedException();
+        public async Task<List<Producto>> ObtenerProductosAprobados()
+        {
+            return await _productoRepository.ObtenerProductosAprobados();
+        }
+
+        public async Task ActualizarProducto(int id, Producto producto)
+        {
+            var productoExistente = await _productoRepository.ObtenerProducto(id);
+
+            if (productoExistente == null)
+                throw new KeyNotFoundException("Producto no encontrado.");
+
+            if (string.IsNullOrWhiteSpace(producto.Codigo))
+                throw new ArgumentException("El código es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(producto.Descripcion))
+                throw new ArgumentException("La descripción es obligatoria.");
+
+            if (producto.Tamano <= 0 || producto.Porcion <= 0)
+                throw new ArgumentException("El tamaño y la porción deben ser mayores a cero.");
+
+            await _productoRepository.ActualizarProducto(id, producto);
+        }
+
         public Task EliminarProducto(int id) => throw new NotImplementedException();
-        public Task AprobarProducto(int id) => throw new NotImplementedException();
+
+        public async Task AprobarProducto(int id)
+        {
+            await _productoRepository.AprobarProducto(id);
+        }
     }
+    
 }

@@ -57,12 +57,65 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpGet("aprobados")]
-        public Task<IActionResult> ObtenerProductosAprobados() => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerProductosAprobados()
+        {
+            var productos = await _productoService.ObtenerProductosAprobados();
+            return Ok(productos);
+        }
 
         [HttpPut("{id}")]
-        public Task<IActionResult> ActualizarProducto(int id, [FromBody] Producto producto) => throw new NotImplementedException();
+        public async Task<IActionResult> ActualizarProducto(int id, [FromBody] Producto producto)
+        {
+            try
+            {
+                await _productoService.ActualizarProducto(id, producto);
+
+                return Ok(new
+                {
+                    mensaje = "Producto actualizado correctamente."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al actualizar producto.",
+                    detalle = ex.Message
+                });
+            }
+        }
 
         [HttpDelete("{id}")]
         public Task<IActionResult> EliminarProducto(int id) => throw new NotImplementedException();
+
+        [HttpPut("{id}/aprobar")]
+        public async Task<IActionResult> AprobarProducto(int id)
+        {
+            try
+            {
+                await _productoService.AprobarProducto(id);
+
+                return Ok(new
+                {
+                    mensaje = "Producto aprobado correctamente."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al aprobar producto.",
+                    detalle = ex.Message
+                });
+            }
+        }
     }
 }
