@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../App.css'; 
+import Productos from './Productos';
 
 // ==========================================
 // Importamos los módulos de cada seccion
@@ -97,6 +98,8 @@ const NutricionistaDashboard = () => {
         {vistaActiva === 'registrar-cliente' && <RegistrarCliente />}
         
         {vistaActiva === 'planes' && <AsignarPlan />}
+
+        {vistaActiva === 'productos' && <Productos />}
         
         {/* Cuando se cree los archivos, primero se importa arriba, 
           se rederiza aca
