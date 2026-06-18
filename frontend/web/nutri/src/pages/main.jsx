@@ -9,7 +9,7 @@ import RegistrarCliente from './clientSearch';
 import AsignarPlan from './createPlan';
 import GestionPlan from './nuevoPlan';
 // Descomentacuando cuando se crea los archivos
-// import MedidasPersonales from './MedidasPersonales';
+// import RegistrarCuenta from './RegistrarCuenta';
 // import CatalogoProductos from './CatalogoProductos';
 // import SeguimientoCliente from './SeguimientoCliente';
 
@@ -91,7 +91,7 @@ const NutricionistaDashboard = () => {
               </div>
 
               <div className="card" onClick={() => setVistaActiva('medidas')}>
-                <h3>Medidas Personales</h3>
+                <h3>Administrar Cuenta</h3>
                 <p>Registra sus datos personales.</p>
               </div>
             </div>
@@ -109,7 +109,7 @@ const NutricionistaDashboard = () => {
         {/* Cuando se cree los archivos, primero se importa arriba, 
           se rederiza aca
           
-          {vistaActiva === 'medidas' && <MedidasPersonales />}
+          {vistaActiva === 'registro' && <RegistrarCuenta />}
           {vistaActiva === 'productos' && <CatalogoProductos />}
           {vistaActiva === 'seguimiento' && <SeguimientoCliente />}
         */}

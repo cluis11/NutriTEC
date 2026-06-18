@@ -56,6 +56,7 @@ builder.Services.AddScoped<ProductoRepository>();
 builder.Services.AddScoped<PlanRepository>();
 builder.Services.AddScoped<RecetaRepository>();
 builder.Services.AddScoped<AdminRepository>();
+builder.Services.AddScoped<MedidaRepository>();
 
 // Services
 builder.Services.AddScoped<AuthService>();
@@ -65,7 +66,7 @@ builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<PlanService>();
 builder.Services.AddScoped<RecetaService>();
 builder.Services.AddScoped<AdminService>();
-
+builder.Services.AddScoped<MedidaService>();
 // ============================================================
 // PIPELINE
 // ============================================================
