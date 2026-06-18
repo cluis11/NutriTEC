@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using NutriTEC.API.DTOs;
 using NutriTEC.API.Models;
 using NutriTEC.API.Services;
 
@@ -31,12 +32,37 @@ namespace NutriTEC.API.Controllers
         public Task<IActionResult> ObtenerReporteAvance(int id, [FromQuery] DateTime fecha_inicio, [FromQuery] DateTime fecha_fin) => throw new NotImplementedException();
 
         [HttpGet("{id}/registro")]
-        public Task<IActionResult> ObtenerRegistroDiario(int id, [FromQuery] DateTime fecha) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerRegistroDiario(int id, [FromQuery] DateTime fecha)
+        {
+            try
+            {
+                var resultado =
+                    await _clienteService.ObtenerRegistroDiario(id, fecha);
 
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = ex.Message
+                });
+            }
+        }
         [HttpPost("{id}/registro")]
-        public Task<IActionResult> RegistrarProducto(int id, [FromBody] object request) => throw new NotImplementedException();
-
-        [HttpPost("{id}/registro/plan")]
+        public async Task<IActionResult> RegistrarComida(int id, [FromBody] RegistroComidaDTO request)
+        {
+            try
+            {
+                await _clienteService.RegistrarComida(request);
+                return Ok(new { mensaje = "¡Alimento registrado con éxito!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = $"Error al registrar: {ex.Message}" });
+            }
+        }
+        
         public Task<IActionResult> RegistrarDesdePlan(int id, [FromBody] object request) => throw new NotImplementedException();
 
         [HttpPost("{id}/registro/receta")]
