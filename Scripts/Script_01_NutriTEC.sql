@@ -197,3 +197,37 @@ CREATE TABLE RegistroxProducto (
     CONSTRAINT FK_RxP_Producto
         FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
+
+
+-- ------------------------------------------------------------
+-- Vista 1 — Pacientes sin Nutricionista
+-- ------------------------------------------------------------
+GO
+IF OBJECT_ID('dbo.vw_ClientesSinNutricionista', 'V') IS NOT NULL
+    DROP VIEW dbo.vw_ClientesSinNutricionista;
+GO
+
+CREATE VIEW dbo.vw_ClientesSinNutricionista AS
+SELECT 
+    c.id_usuario AS id, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais 
+FROM dbo.Usuario u
+INNER JOIN dbo.Cliente c ON u.id_usuario = c.id_usuario
+LEFT JOIN dbo.ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente
+WHERE cxn.id_nutricionista IS NULL;
+GO
+
+-- ------------------------------------------------------------
+-- Vista 2 — Pacientes Activos por Nutricionista
+-- ------------------------------------------------------------
+GO
+IF OBJECT_ID('dbo.vw_PacientesActivos', 'V') IS NOT NULL
+    DROP VIEW dbo.vw_PacientesActivos;
+GO
+
+CREATE VIEW dbo.vw_PacientesActivos AS
+SELECT 
+    cxn.id_nutricionista, u.id_usuario, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais
+FROM Usuario u
+INNER JOIN Cliente c ON u.id_usuario = c.id_usuario
+INNER JOIN ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente;
+GO

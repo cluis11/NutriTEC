@@ -49,8 +49,8 @@ namespace NutriTEC.API.Services
             return _planRepository.ObtenerPlanesPorNutricionista(id_nutricionista);
         }
         //public Task AgregarProducto(int id_plan, ProductoxPlan producto) => throw new NotImplementedException();
-        public Task EliminarProductoDePlan(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
-        public Task ActualizarNombrePlan(int id, string nombre) => throw new NotImplementedException();
+        //public Task EliminarProductoDePlan(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
+        //public Task ActualizarNombrePlan(int id, string nombre) => throw new NotImplementedException();
         public async Task EliminarPlan(int id)
         {
             bool Activo = await _planRepository.TieneAsignacionesActivas(id);
@@ -60,6 +60,21 @@ namespace NutriTEC.API.Services
             }
 
             await _planRepository.EliminarPlan(id);
+        }
+
+        public Task<List<PacienteActivoDTO>> ObtenerClientesActivos(int id_nutricionista)
+        {
+            return _planRepository.ObtenerPacientes(id_nutricionista);
+        }
+
+        public Task<List<ClienteDisponibleDTO>> ObtenerClientesDisponibles()
+        {
+            return _planRepository.ObtenerClientes();
+        }
+
+        public Task AsignarCliente(int id_nutricionista, int id_cliente)
+        {
+            return _planRepository.AsignarCliente(id_nutricionista, id_cliente);
         }
         public Task AsignarPlan(int id_plan, int id_cliente, int id_nutricionista, DateTime inicio, DateTime fin) => throw new NotImplementedException();
     }

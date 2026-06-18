@@ -167,9 +167,9 @@ namespace NutriTEC.API.Data.Repositories
             }
         }
 
-        public Task<bool> ProductoExisteEnTiempo(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
-        public Task EliminarProductoDePlan(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
-        public Task ActualizarNombrePlan(int id, string nombre) => throw new NotImplementedException();
+        //public Task<bool> ProductoExisteEnTiempo(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
+        //public Task EliminarProductoDePlan(int id_plan, int id_producto, string tiempo) => throw new NotImplementedException();
+        //public Task ActualizarNombrePlan(int id, string nombre) => throw new NotImplementedException();
         public async Task<bool> TieneAsignacionesActivas(int id)
         {
             using var conn = _db.GetConnection();
@@ -220,7 +220,70 @@ namespace NutriTEC.API.Data.Repositories
                 throw;
             }
         }
-        public Task<bool> ClienteEsPaciente(int id_nutricionista, int id_cliente) => throw new NotImplementedException();
+        public async Task<List<PacienteActivoDTO>> ObtenerPacientes(int id_nutricionista)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            using var cmd = new SqlCommand(
+                "SELECT  * FROM dbo.vw_PacientesActivos " +
+                "WHERE id_nutricionista = @id_nutricionista", conn);
+            cmd.Parameters.AddWithValue("@id_nutricionista", id_nutricionista);
+            
+            using var reader = await cmd.ExecuteReaderAsync();
+            var pacientes = new List<PacienteActivoDTO>();
+            while (await reader.ReadAsync())
+            {
+                pacientes.Add(new PacienteActivoDTO
+                {
+                    Id_usuario = reader.GetInt32(1),
+                    Nombre = reader.GetString(2),
+                    Ap1 = reader.GetString(3),
+                    Ap2 = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                    Fecha_nacimiento = reader.GetDateTime(5),
+                    Correo = reader.GetString(6),
+                    Pais = reader.GetString(7)
+                });
+            }
+            return pacientes;
+        }
+        public async Task<List<ClienteDisponibleDTO>> ObtenerClientes()
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            using var cmd = new SqlCommand(
+                "SELECT * FROM dbo.vw_ClientesSinNutricionista;", conn);
+                
+            var clientes = new List<ClienteDisponibleDTO>();
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                clientes.Add(new ClienteDisponibleDTO
+                {
+                    Id_usuario = reader.GetInt32(0),
+                    Nombre = reader.GetString(1),
+                    Ap1 = reader.GetString(2),
+                    Ap2 = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    Fecha_nacimiento = reader.GetDateTime(4),
+                    Correo = reader.GetString(5),
+                    Pais = reader.GetString(6)
+                });
+            }
+            return clientes;
+        }
+        
+        public async Task AsignarCliente(int id_nutricionista, int id_cliente)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            using var cmd = new SqlCommand(
+                "INSERT INTO ClientexNutricionista (id_nutricionista, id_cliente) VALUES (@id_nutricionista, @id_cliente)", conn);
+            cmd.Parameters.AddWithValue("@id_nutricionista", id_nutricionista);
+            cmd.Parameters.AddWithValue("@id_cliente", id_cliente);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         public Task<bool> ClienteTienePlanActivo(int id_cliente, DateTime inicio, DateTime fin) => throw new NotImplementedException();
         public Task AsignarPlan(int id_plan, int id_cliente, DateTime inicio, DateTime fin) => throw new NotImplementedException();
     }

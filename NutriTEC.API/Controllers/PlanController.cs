@@ -69,8 +69,8 @@ namespace NutriTEC.API.Controllers
         [HttpPost("{id}/producto")]
         public Task<IActionResult> AgregarProducto(int id, [FromBody] ProductoxPlan producto) => throw new NotImplementedException();
 
-        [HttpDelete("{id}/producto/{id_producto}/{tiempo}")]
-        public Task<IActionResult> EliminarProductoDePlan(int id, int id_producto, string tiempo) => throw new NotImplementedException();
+        //[HttpDelete("{id}/producto/{id_producto}/{tiempo}")]
+        //public Task<IActionResult> EliminarProductoDePlan(int id, int id_producto, string tiempo) => throw new NotImplementedException();
 
         //[HttpPut("{id}")]
         //public Task<IActionResult> ActualizarNombrePlan(int id, [FromBody] object request) => throw new NotImplementedException();
@@ -87,6 +87,36 @@ namespace NutriTEC.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("nutricionista/{id}/clientes")]
+        public async Task<IActionResult> ObtenerClientesActivos(int id)
+        {
+            var clientes = await _planService.ObtenerClientesActivos(id);
+            return Ok(clientes);
+        }
+
+        [HttpGet("disponibles")]
+        public async Task<IActionResult> ObtenerClientesDisponibles()
+        {
+            var clientes = await _planService.ObtenerClientesDisponibles();
+            return Ok(clientes);
+        }
+
+        [HttpPost("{id_nutricionista}/cliente/{id_cliente}/asignar")]
+        public async Task<IActionResult> AsignarCliente(int id_nutricionista, int id_cliente)
+        {
+           try
+            {
+                await _planService.AsignarCliente(id_nutricionista, id_cliente);
+                return Ok(new { mensaje = "Cliente asignado correctamente." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
+
+        
 
         [HttpPost("{id}/asignar")]
         public Task<IActionResult> AsignarPlan(int id, [FromBody] object request) => throw new NotImplementedException();
