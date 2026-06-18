@@ -197,7 +197,42 @@ CREATE TABLE RegistroxProducto (
     CONSTRAINT FK_RxP_Producto
         FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
+-- ============================================================
+-- SP MAX DE CALORIAS
+-- ============================================================
+CREATE PROCEDURE sp_ExcesoCalorico
+    @idCliente INT,
+    @fecha DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    -- Inicializar con valores base
+    DECLARE @caloriasConsumidas DECIMAL(7,2) = 0.00;
+    DECLARE @consumoMaximo DECIMAL(7,2) = 2000.00;
+
+    -- 1. Calcular el consumo acumulado 
+    SELECT @caloriasConsumidas = SUM(rp.Cantidad * p.Energia)
+    FROM Registro_Diario rd
+    INNER JOIN RegistroxProducto rp ON rd.id_registro = rp.id_registro
+    INNER JOIN Producto p ON RP.id_producto = P.id_producto
+    WHERE rd.id_cliente = @idCliente AND rd.Fecha = @fecha;
+
+    -- 2. Obtener meta del cliente
+    SELECT @consumoMaximo = Consumo_maximo 
+    FROM Cliente 
+    WHERE id_usuario = @idCliente;
+
+    -- 3. Retornar datos si se superó el límite 
+    IF (@caloriasConsumidas > @consumoMaximo)
+    BEGIN
+        SELECT 
+            N'¡Alerta, Has superado tu límite permitido de Calorias!' AS MensajeAlerta,
+            @caloriasConsumidas AS TotalConsumido,
+            @consumoMaximo AS LimiteMaximo;
+    END
+END;
+GO
 -- ============================================================
 -- VISTA DE REGISTRO
 -- ============================================================
@@ -214,3 +249,4 @@ INNER JOIN RegistroxProducto rxp
 ON rd.id_registro = rxp.id_registro
 INNER JOIN Producto p 
 ON rxp.id_producto = p.id_producto;
+GO

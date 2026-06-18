@@ -71,11 +71,17 @@ namespace NutriTEC.API.Services
                 Registros = registrosAcomodados
             };
         }
-        public async Task RegistrarComida(RegistroComidaDTO request)
+        public async Task<(bool Excedido, string MensajeAlerta)> RegistrarComida(int idCliente, RegistroComidaDTO request)
         {
-            // Enviamos el objeto con los datos
+            // 1. Guardar la comida en la base de datos delegando al repositorio
             await _clienteRepository.RegistrarComida(request);
-        }        public Task RegistrarProducto(int id_cliente, DateTime fecha, string tiempo, int id_producto, decimal cantidad) => throw new NotImplementedException();
+
+            // 2. Invocar la validación del SP mediante el repositorio para mantener desacoplada la infraestructura
+            var (excedido, mensajeAlerta) = await _clienteRepository.ExcesoCalorico(idCliente, request.Fecha);
+
+            return (excedido, mensajeAlerta);
+        }
+        public Task RegistrarProducto(int id_cliente, DateTime fecha, string tiempo, int id_producto, decimal cantidad) => throw new NotImplementedException();
         public Task RegistrarDesdePlan(int id_cliente, DateTime fecha, string tiempo) => throw new NotImplementedException();
         public Task RegistrarDesdeReceta(int id_cliente, DateTime fecha, string tiempo, int id_receta) => throw new NotImplementedException();
     }

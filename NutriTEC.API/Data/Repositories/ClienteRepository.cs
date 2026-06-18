@@ -2,6 +2,7 @@ using NutriTEC.API.Data.Connection;
 using Microsoft.Data.SqlClient;
 using NutriTEC.API.Models;
 using NutriTEC.API.DTOs;
+using System.Data;
 
 namespace NutriTEC.API.Data.Repositories
 {
@@ -21,6 +22,33 @@ namespace NutriTEC.API.Data.Repositories
         public Task RegistrarMedida(Medida medida) => throw new NotImplementedException();
         public Task<bool> MedidaExiste(int id_cliente, DateTime fecha) => throw new NotImplementedException();
         public Task<List<MedidaVariacionDTO>> ObtenerReporteAvance(int id_cliente, DateTime fecha_inicio, DateTime fecha_fin) => throw new NotImplementedException();
+        public async Task<(bool Excedido, string MensajeAlerta)> ExcesoCalorico(int idCliente, DateTime fecha)
+        {
+            // Inicializar
+            bool estaExcedido = false;
+            string mensajeAlerta = string.Empty;
+
+            // Llamar sp
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+            using (var command = new SqlCommand("sp_ExcesoCalorico", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@idCliente", idCliente);
+                command.Parameters.AddWithValue("@fecha", fecha);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (reader.HasRows && await reader.ReadAsync())
+                    {
+                        estaExcedido = true;
+                        mensajeAlerta = reader.GetString(0);
+                    }
+                }
+            }
+
+            return (estaExcedido, mensajeAlerta);
+        }
         public async Task<List<ComidaConsumidaDTO>> ObtenerConsumo(int idCliente, DateTime fecha)
         {
             using var connection = _db.GetConnection();
