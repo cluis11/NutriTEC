@@ -29,11 +29,42 @@ namespace NutriTEC.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarPlan(int id, [FromBody] PlanAlimentacion plan)
+        {
+            if (id != plan.Id_plan)
+            {
+                return BadRequest("El ID del plan no coincide con el enviado en el cuerpo.");
+            }
+
+            try
+            {
+                await _planService.ActualizarPlan(plan);
+                return Ok(new { mensaje = "Plan actualizado correctamente." });
+            }
+            catch (InvalidOperationException ex) // Atrapa la restricción del cliente activo
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
         [HttpGet("{id}")]
-        public Task<IActionResult> ObtenerPlan(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerPlan(int id)
+        {
+            var plan = await _planService.ObtenerPlan(id);
+            return Ok(plan);
+        }
 
         [HttpGet("nutricionista/{id}")]
-        public Task<IActionResult> ObtenerPlanesPorNutricionista(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerPlanesPorNutricionista(int id)
+        {
+            var planes = await _planService.ObtenerPlanesPorNutricionista(id);
+            return Ok(planes);
+        }
 
         [HttpPost("{id}/producto")]
         public Task<IActionResult> AgregarProducto(int id, [FromBody] ProductoxPlan producto) => throw new NotImplementedException();
@@ -41,11 +72,21 @@ namespace NutriTEC.API.Controllers
         [HttpDelete("{id}/producto/{id_producto}/{tiempo}")]
         public Task<IActionResult> EliminarProductoDePlan(int id, int id_producto, string tiempo) => throw new NotImplementedException();
 
-        [HttpPut("{id}")]
-        public Task<IActionResult> ActualizarNombrePlan(int id, [FromBody] object request) => throw new NotImplementedException();
+        //[HttpPut("{id}")]
+        //public Task<IActionResult> ActualizarNombrePlan(int id, [FromBody] object request) => throw new NotImplementedException();
 
         [HttpDelete("{id}")]
-        public Task<IActionResult> EliminarPlan(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> EliminarPlan(int id)
+        {
+            try
+            {
+                await _planService.EliminarPlan(id);
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpPost("{id}/asignar")]
         public Task<IActionResult> AsignarPlan(int id, [FromBody] object request) => throw new NotImplementedException();

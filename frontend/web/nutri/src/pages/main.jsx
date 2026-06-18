@@ -7,6 +7,7 @@ import '../App.css';
 // ==========================================
 import RegistrarCliente from './clientSearch';
 import AsignarPlan from './createPlan';
+import GestionPlan from './nuevoPlan';
 // Descomentacuando cuando se crea los archivos
 // import MedidasPersonales from './MedidasPersonales';
 // import CatalogoProductos from './CatalogoProductos';
@@ -32,6 +33,7 @@ const NutricionistaDashboard = () => {
           {[
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'registrar-cliente', label: 'Registrar Cliente' },
+            { id: 'gestion-plan', label: 'Gestionar Plan' },
             { id: 'planes', label: ' Asignar Plan' },
             { id: 'productos', label: 'Registrar Productos' },
             { id: 'seguimiento', label: 'Seguimiento de Cliente' },
@@ -68,6 +70,11 @@ const NutricionistaDashboard = () => {
                 <p>Añade nuevos pacientes al sistema.</p>
               </div>
 
+              <div className="card" onClick={() => setVistaActiva('gestion-plan')}>
+                <h3>Gestionar Plan</h3>
+                <p>Visualiza y modifica los planes de alimentación existentes.</p>
+              </div>
+
               <div className="card" onClick={() => setVistaActiva('planes')}>
                 <h3>Asignar Plan</h3>
                 <p>Estructura y asigna el calendario de comidas.</p>
@@ -95,9 +102,10 @@ const NutricionistaDashboard = () => {
             Renderizamos cada componente según la vista activa
            ========================================== */}
         {vistaActiva === 'registrar-cliente' && <RegistrarCliente />}
-        
+
+        {vistaActiva === 'gestion-plan' && <GestionPlan />}
+
         {vistaActiva === 'planes' && <AsignarPlan />}
-        
         {/* Cuando se cree los archivos, primero se importa arriba, 
           se rederiza aca
           

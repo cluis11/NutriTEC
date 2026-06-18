@@ -14,5 +14,6 @@ namespace NutriTEC.API.Models
         public int Id_producto { get; set; }
         public string Tiempo { get; set; }
         public decimal Cantidad { get; set; }
+        public string? Descripcion { get; set; }
     }
 }
