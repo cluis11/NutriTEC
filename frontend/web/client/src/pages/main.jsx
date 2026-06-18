@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // ==========================================
 import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
-// import GestionRecetas from './GestionRecetas';
+import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
 
 const ClientMain = () => {
@@ -263,8 +263,7 @@ const ClientMain = () => {
             {vistaActiva === 'medida' && <RegistroMedidas />}
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
-            {/* Marcadores provisionales para las vistas que quedan por hacer */}
-            {vistaActiva === 'recetas' && <div className="card p-4"><h3>Gestión de Recetas</h3></div>}
+            {vistaActiva === 'recetas' && <GestionRecetas />}
           </div>
         )}
 
