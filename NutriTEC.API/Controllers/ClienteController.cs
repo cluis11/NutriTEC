@@ -54,13 +54,21 @@ namespace NutriTEC.API.Controllers
         {
             try
             {
-                await _clienteService.RegistrarComida(request);
-                return Ok(new { mensaje = "¡Alimento registrado con éxito!" });
+                // Guardar comida en db
+                var resultadoAlerta = await _clienteService.RegistrarComida(id, request);
+
+                // Dar respuesta
+                return Ok(new { 
+                    success = true, 
+                    excedido = resultadoAlerta.Excedido, 
+                    mensaje = resultadoAlerta.Excedido ? resultadoAlerta.MensajeAlerta : "¡Alimento registrado con éxito!" 
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { mensaje = $"Error al registrar: {ex.Message}" });
             }
+            
         }
         
         public Task<IActionResult> RegistrarDesdePlan(int id, [FromBody] object request) => throw new NotImplementedException();

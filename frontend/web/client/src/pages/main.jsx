@@ -49,11 +49,11 @@ const ClientMain = () => {
       cargarProductosAPI();
   }, []);
 
-
   // Cargar el consumo diario cada vez que cambie la semana activa 
   useEffect(() => {
       cargarConsumoDiarioAPI();
     }, [fechaPivote, idClienteLogueado]); 
+
   // Cargar datos del api
   const cargarConsumoDiarioAPI = async () => {
     try {
@@ -99,7 +99,7 @@ const ClientMain = () => {
 
               listaPlanaFormateada.push({
                 fecha: fechaRealRegistro.trim(),
-                tiempo: reg.tiempo ? reg.tiempo.toLowerCase().trim() : "desayuno", // <-- Normalizado a minúsculas
+                tiempo: reg.tiempo ? reg.tiempo.toLowerCase().trim() : "desayuno",
                 detalle: prod.descripcion || prod.nombre,
                 calorias: prod.energia
               });
@@ -123,26 +123,6 @@ const ClientMain = () => {
     const sumaCalorias = comidasDelDia.reduce((acc, curr) => acc + (curr.calorias || 0), 0);
     setCaloriasTotales(sumaCalorias);
   }, [fechaComida, comidasAsignadas]);
-
-  // Traer productos
-  useEffect(() => {
-    const cargarProductosAPI = async () => {
-        try {
-          const response = await fetch('http://localhost:5108/api/producto');
-          if (response.ok) {
-            const datos = await response.json();
-            setListaAlimentos(datos);
-          } else {
-            const textoError = await response.text();
-            alert("El backend de NutriTEC falló al obtener los productos. Revisá la terminal de .NET.");
-          }
-        } catch (error) {
-          console.error("No se pudo conectar con el servidor de NutriTEC:", error);
-        }
-      };
-
-      cargarProductosAPI();
-  }, []);
 
   // Calcular calorías totales por dia
   useEffect(() => {
@@ -194,51 +174,61 @@ const ClientMain = () => {
   const mesEncabezado = nombresMeses[diasDeEstaSemana[0].getMonth()];
   const añoEncabezado = diasDeEstaSemana[0].getFullYear();
 
-  // Logica de registro
-  const handleRegistrarComida = async (e) => {
-    e.preventDefault();
-    if (!alimentoSeleccionado) {
-      alert("Por favor, busque una comida válida");
-      return;
-    }
-        
-  const nombreAlimentoElegido = alimentoSeleccionado.nombre || alimentoSeleccionado.descripcion;
+  // Logica registro de comida
+const handleRegistrarComida = async (e) => {
+  e.preventDefault();
+  if (!alimentoSeleccionado) {
+    alert("Por favor, busque una comida válida");
+    return;
+  }
   
-    // Estructura del nuevo consumo diario
-    const datosRegistro = {
-      id_cliente: parseInt(idClienteLogueado),
-      fecha: fechaComida,
-      tiempo: tiempoComida.toLowerCase(), 
-      id_producto: alimentoSeleccionado.id_producto || alimentoSeleccionado.id, 
-      cantidad: parseFloat(porcionComida)
-    };
+  // Obtener imputs
+  const datosRegistro = {
+    id_cliente: parseInt(idClienteLogueado),
+    fecha: fechaComida, 
+    tiempo: tiempoComida.toLowerCase(), 
+    id_producto: alimentoSeleccionado.id_producto || alimentoSeleccionado.id, 
+    cantidad: parseFloat(porcionComida)
+  };
 
-    try {
-      const response = await fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(datosRegistro)
-      });
+  try {
+    const response = await fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(datosRegistro)
+    });
 
-      if (response.ok) {
-        alert(`¡Éxito! "${nombreAlimentoElegido}" asignado a tu ${tiempoComida}.`);
-        
-        // Actualizar el calendario
-        await cargarConsumoDiarioAPI();
-        
-        // Limpieza de campos del buscador
-        setFiltroAlimento('');
-        setAlimentoSeleccionado(null);
-        setPorcionComida(1);
-      } else {
+    if (response.ok) {
+      const resultado = await response.json();
+      
+      // Alerta de registro
+      alert(resultado.mensaje || "¡Alimento registrado con éxito!");
+      
+      // Sincronizar el calendario 
+      const nuevaFechaPivote = new Date(fechaComida + 'T12:00:00'); 
+      setFechaPivote(nuevaFechaPivote);
+      await cargarConsumoDiarioAPI();
+      
+      // Limpieza de campos del buscador
+      setFiltroAlimento('');
+      setAlimentoSeleccionado(null);
+      setPorcionComida(1);
+    } else {
+      // Si el servidor responde, pero no con un 200 OK 
+      try {
+        const errorData = await response.json();
+        alert(`Error del servidor: ${errorData.mensaje}`);
+      } catch {
         alert("No se pudo registrar la comida en el servidor.");
       }
-    } catch (error) {
-      alert("Error de red con el servidor de NutriTEC.");
     }
-  };
+  } catch (error) {
+    console.error("Error de red:", error);
+    alert("Error de red con el servidor de NutriTEC.");
+  }
+};
 
   return (
     <div className="container-fluid calendar-container py-2" style={{ minHeight: "100vh", overflowY: "auto" }}>
