@@ -54,7 +54,12 @@ namespace NutriTEC.API.Services
             return await _recetaRepository.ObtenerReceta(id);
         }
         
-        public Task<List<RecetaResumenDTO>> ObtenerRecetasPorCliente(int id_cliente) => throw new NotImplementedException();
+        public async Task<List<RecetaResumenDTO>> ObtenerRecetasPorCliente(int id_cliente)
+        {
+            return await _recetaRepository.ObtenerRecetasPorCliente(id_cliente);
+        }
+
+
         public Task AgregarProducto(int id_receta, ProductoxReceta producto) => throw new NotImplementedException();
         public Task EliminarProductoDeReceta(int id_receta, int id_producto) => throw new NotImplementedException();
         public Task ActualizarNombreReceta(int id, string nombre) => throw new NotImplementedException();

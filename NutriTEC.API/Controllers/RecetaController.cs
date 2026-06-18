@@ -58,8 +58,15 @@ namespace NutriTEC.API.Controllers
             return Ok(receta);
         }
 
-        [HttpGet("cliente/{id}")]
-        public Task<IActionResult> ObtenerRecetasPorCliente(int id) => throw new NotImplementedException();
+        
+
+        [HttpGet("cliente/{id_cliente}")]
+        public async Task<IActionResult> ObtenerRecetasPorCliente(int id_cliente)
+        {
+            var recetas = await _recetaService.ObtenerRecetasPorCliente(id_cliente);
+
+            return Ok(recetas);
+        }
 
         [HttpPost("{id}/producto")]
         public Task<IActionResult> AgregarProducto(int id, [FromBody] ProductoxReceta producto) => throw new NotImplementedException();

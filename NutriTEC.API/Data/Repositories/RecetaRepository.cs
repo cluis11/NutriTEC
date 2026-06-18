@@ -135,7 +135,40 @@ namespace NutriTEC.API.Data.Repositories
 
             return receta;
         }
-        public Task<List<RecetaResumenDTO>> ObtenerRecetasPorCliente(int id_cliente) => throw new NotImplementedException();
+
+
+        public async Task<List<RecetaResumenDTO>> ObtenerRecetasPorCliente(int id_cliente)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                SELECT
+                    id_receta,
+                    Nombre
+                FROM Receta
+                WHERE id_cliente = @id_cliente
+                ORDER BY id_receta ASC";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id_cliente", id_cliente);
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            var recetas = new List<RecetaResumenDTO>();
+
+            while (await reader.ReadAsync())
+            {
+                recetas.Add(new RecetaResumenDTO
+                {
+                    Id_receta = reader.GetInt32(reader.GetOrdinal("id_receta")),
+                    Nombre = reader.GetString(reader.GetOrdinal("Nombre"))
+                });
+            }
+
+            return recetas;
+        }
+
         public Task AgregarProducto(int id_receta, ProductoxReceta producto) => throw new NotImplementedException();
         public Task<bool> ProductoExisteEnReceta(int id_receta, int id_producto) => throw new NotImplementedException();
         public Task EliminarProductoDeReceta(int id_receta, int id_producto) => throw new NotImplementedException();
