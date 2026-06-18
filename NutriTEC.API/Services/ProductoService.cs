@@ -44,7 +44,10 @@ namespace NutriTEC.API.Services
             return await _productoRepository.ObtenerProductos();
         }
         
-        public Task<List<Producto>> ObtenerProductosAprobados() => throw new NotImplementedException();
+        public async Task<List<Producto>> ObtenerProductosAprobados()
+        {
+            return await _productoRepository.ObtenerProductosAprobados();
+        }
 
         public async Task ActualizarProducto(int id, Producto producto)
         {

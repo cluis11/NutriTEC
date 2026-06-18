@@ -57,7 +57,11 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpGet("aprobados")]
-        public Task<IActionResult> ObtenerProductosAprobados() => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerProductosAprobados()
+        {
+            var productos = await _productoService.ObtenerProductosAprobados();
+            return Ok(productos);
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> ActualizarProducto(int id, [FromBody] Producto producto)
@@ -88,7 +92,7 @@ namespace NutriTEC.API.Controllers
                 });
             }
         }
-        
+
         [HttpDelete("{id}")]
         public Task<IActionResult> EliminarProducto(int id) => throw new NotImplementedException();
 

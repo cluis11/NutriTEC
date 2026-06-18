@@ -16,10 +16,47 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpPost]
-        public Task<IActionResult> CrearReceta([FromBody] Receta receta) => throw new NotImplementedException();
+        public async Task<IActionResult> CrearReceta([FromBody] Receta receta)
+        {
+            try
+            {
+                var id = await _recetaService.CrearReceta(receta);
+
+                return Ok(new
+                {
+                    mensaje = "Receta creada correctamente.",
+                    id_receta = id
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al crear receta.",
+                    detalle = ex.Message
+                });
+            }
+        }
 
         [HttpGet("{id}")]
-        public Task<IActionResult> ObtenerReceta(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerReceta(int id)
+        {
+            var receta = await _recetaService.ObtenerReceta(id);
+
+            if (receta == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Receta no encontrada."
+                });
+            }
+
+            return Ok(receta);
+        }
 
         [HttpGet("cliente/{id}")]
         public Task<IActionResult> ObtenerRecetasPorCliente(int id) => throw new NotImplementedException();
