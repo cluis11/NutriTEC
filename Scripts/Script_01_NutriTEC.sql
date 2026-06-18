@@ -197,3 +197,20 @@ CREATE TABLE RegistroxProducto (
     CONSTRAINT FK_RxP_Producto
         FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
+
+-- ============================================================
+-- VISTA DE REGISTRO
+-- ============================================================
+CREATE VIEW Vista_RegistroDiario AS
+SELECT 
+    rd.id_cliente,
+    rd.Fecha,
+    rd.Tiempo,
+    p.Descripcion AS Producto,
+    rxp.Cantidad,
+    (p.Energia * rxp.Cantidad) AS Calorias 
+FROM Registro_Diario rd
+INNER JOIN RegistroxProducto rxp 
+ON rd.id_registro = rxp.id_registro
+INNER JOIN Producto p 
+ON rxp.id_producto = p.id_producto;

@@ -13,8 +13,10 @@ import ReporteAvance from './reporte';
 
 const ClientMain = () => {
   const navigate = useNavigate();
+  const [idClienteLogueado] = useState(localStorage.getItem('idCliente') || 4);
   const [vistaActiva, setVistaActiva] = useState('dashboard');
- const [comidasAsignadas, setComidasAsignadas] = useState([]);
+  const [comidasAsignadas, setComidasAsignadas] = useState([]);
+  const [fechaPivote, setFechaPivote] = useState(new Date());
 
   const [fechaComida, setFechaComida] = useState(new Date().toISOString().split('T')[0]);
   const [tiempoComida, setTiempoComida] = useState('Desayuno');
@@ -47,13 +49,105 @@ const ClientMain = () => {
       cargarProductosAPI();
   }, []);
 
+
+  // Cargar el consumo diario cada vez que cambie la semana activa 
+  useEffect(() => {
+      cargarConsumoDiarioAPI();
+    }, [fechaPivote, idClienteLogueado]); 
+  // Cargar datos del api
+  const cargarConsumoDiarioAPI = async () => {
+    try {
+      // Calcular para una semana 
+      const diasSemanaActual = obtenerDiasDeLaSemana(fechaPivote);
+      
+      // Función para formatear fechas a ISO (YYYY-MM-DD) 
+      const formatearFechaISO = (objetoFecha) => {
+        const yyyy = objetoFecha.getFullYear();
+        const mm = String(objetoFecha.getMonth() + 1).padStart(2, '0');
+        const dd = String(objetoFecha.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      };
+
+    // Consultamos la API para los 7 días de la semana
+    const promesasSemanales = diasSemanaActual.map(dia =>
+      fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro?fecha=${formatearFechaISO(dia)}`)
+        .then(res => res.ok ? res.json() : null)
+        .catch(() => null)
+    );
+
+    const resultadosSemanales = await Promise.all(promesasSemanales);
+    const listaPlanaFormateada = [];
+    let caloriasDiaSeleccionado = 0;
+
+    resultadosSemanales.forEach((data, index) => {
+      if (!data) return;
+
+      const fechaCeldaLoop = formatearFechaISO(diasSemanaActual[index]);
+
+      // Guardar calorías totales
+      if (fechaCeldaLoop === fechaComida) {
+        caloriasDiaSeleccionado = data.total_dia || 0;
+      }
+
+      if (data.registros) {
+        data.registros.forEach(reg => {
+          if (reg.productos) {
+            reg.productos.forEach(prod => {
+              
+              // Normalizamos la fecha proveniente de la base de datos 
+              const fechaRealRegistro = reg.fecha ? reg.fecha.split('T')[0] : fechaCeldaLoop;
+
+              listaPlanaFormateada.push({
+                fecha: fechaRealRegistro.trim(),
+                tiempo: reg.tiempo ? reg.tiempo.toLowerCase().trim() : "desayuno", // <-- Normalizado a minúsculas
+                detalle: prod.descripcion || prod.nombre,
+                calorias: prod.energia
+              });
+            });
+          }
+        });
+      }
+    });
+      
+    // Re-renderizar arreglo
+    setComidasAsignadas([...listaPlanaFormateada]);
+    setCaloriasTotales(caloriasDiaSeleccionado);
+  } catch (error) {
+    console.error("Error al conectar con el endpoint de consumo diario:", error);
+  }
+};
+
+  // Actualizar el contador de calorías total por fecha
+  useEffect(() => {
+    const comidasDelDia = comidasAsignadas.filter(c => c.fecha === fechaComida);
+    const sumaCalorias = comidasDelDia.reduce((acc, curr) => acc + (curr.calorias || 0), 0);
+    setCaloriasTotales(sumaCalorias);
+  }, [fechaComida, comidasAsignadas]);
+
+  // Traer productos
+  useEffect(() => {
+    const cargarProductosAPI = async () => {
+        try {
+          const response = await fetch('http://localhost:5108/api/producto');
+          if (response.ok) {
+            const datos = await response.json();
+            setListaAlimentos(datos);
+          } else {
+            const textoError = await response.text();
+            alert("El backend de NutriTEC falló al obtener los productos. Revisá la terminal de .NET.");
+          }
+        } catch (error) {
+          console.error("No se pudo conectar con el servidor de NutriTEC:", error);
+        }
+      };
+
+      cargarProductosAPI();
+  }, []);
+
   // Calcular calorías totales por dia
   useEffect(() => {
-    const caloriasDelDia = comidasAsignadas
-      .filter(c => c.fecha === fechaComida)
-      .reduce((sum, current) => sum + (current.calorias || 0), 0);
-    setCaloriasTotales(caloriasDelDia);
-  }, [fechaComida, comidasAsignadas]);
+    cargarConsumoDiarioAPI();
+  }, [fechaComida, idClienteLogueado]);
 
   // Busqueda por nombre o codigo de barras
   const sugerenciasAlimentos = filtroAlimento.trim() === '' ? [] : listaAlimentos.filter(alimento => {
@@ -63,8 +157,6 @@ const ClientMain = () => {
     return cumpleNombre || cumpleCodigo;
   });
   // Lógica para fechas en el calendario 
-  const [fechaPivote, setFechaPivote] = useState(new Date(2026, 5, 1)); 
-
   const nombresMeses = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -103,31 +195,49 @@ const ClientMain = () => {
   const añoEncabezado = diasDeEstaSemana[0].getFullYear();
 
   // Logica de registro
-  const handleRegistrarComida = (e) => {
+  const handleRegistrarComida = async (e) => {
     e.preventDefault();
     if (!alimentoSeleccionado) {
       alert("Por favor, busque una comida válida");
       return;
     }
         
-  const nombreAlimentoElegido = alimentoSeleccionado.nombre || alimentoSeleccionado.descripcion || "Producto sin nombre";
-  const caloriasBase = alimentoSeleccionado.calorias || alimentoSeleccionado.energia || 0;
-
+  const nombreAlimentoElegido = alimentoSeleccionado.nombre || alimentoSeleccionado.descripcion;
+  
     // Estructura del nuevo consumo diario
-    const nuevoConsumo = {
+    const datosRegistro = {
+      id_cliente: parseInt(idClienteLogueado),
       fecha: fechaComida,
-      tiempo: tiempoComida,
-      detalle: nombreAlimentoElegido,
-      calorias: caloriasBase * porcionComida
+      tiempo: tiempoComida.toLowerCase(), 
+      id_producto: alimentoSeleccionado.id_producto || alimentoSeleccionado.id, 
+      cantidad: parseFloat(porcionComida)
     };
-    setComidasAsignadas(prev => [...prev, nuevoConsumo]);
 
-    alert(`¡Éxito! "${nombreAlimentoElegido}" asignado a tu ${tiempoComida}.`);
-    
-    // Limpieza de campos del buscador
-    setFiltroAlimento('');
-    setAlimentoSeleccionado(null);
-    setPorcionComida(1);
+    try {
+      const response = await fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datosRegistro)
+      });
+
+      if (response.ok) {
+        alert(`¡Éxito! "${nombreAlimentoElegido}" asignado a tu ${tiempoComida}.`);
+        
+        // Actualizar el calendario
+        await cargarConsumoDiarioAPI();
+        
+        // Limpieza de campos del buscador
+        setFiltroAlimento('');
+        setAlimentoSeleccionado(null);
+        setPorcionComida(1);
+      } else {
+        alert("No se pudo registrar la comida en el servidor.");
+      }
+    } catch (error) {
+      alert("Error de red con el servidor de NutriTEC.");
+    }
   };
 
   return (
@@ -279,10 +389,11 @@ const ClientMain = () => {
                 <div className="mb-2">
                   <label className="form-label small fw-semibold text-secondary mb-1">Tiempo de comida:</label>
                   <select className="form-select form-select-sm" value={tiempoComida} onChange={(e) => setTiempoComida(e.target.value)}>
-                    <option value="Desayuno">Desayuno</option>
-                    <option value="Aperitivo">Aperitivo</option>
-                    <option value="Almuerzo">Almuerzo</option>
-                    <option value="Cena">Cena</option>
+                    <option value="desayuno">Desayuno</option>
+                    <option value="merienda_manana">Merienda Mañana</option>
+                    <option value="almuerzo">Almuerzo</option>
+                    <option value="merienda_tarde">Merienda Tarde</option>
+                    <option value="cena">Cena</option>
                   </select>
                 </div>
                 <div className="mb-2 position-relative">
@@ -324,7 +435,7 @@ const ClientMain = () => {
                   )}
                 </div>
                 <div className="mb-2">
-                  <label className="form-label small fw-semibold text-secondary mb-1">Porción (g):</label>
+                  <label className="form-label small fw-semibold text-secondary mb-1">Porción:</label>
                   <input type="number" className="form-control form-control-sm" value={porcionComida} onChange={(e) => setPorcionComida(e.target.value)} required />
                 </div>
                 <button type="submit" className="btn w-100 fw-semibold text-white shadow-sm py-2" style={{ backgroundColor: "#1abc9c", border: "none", fontSize: "0.9rem" }}>
@@ -334,7 +445,7 @@ const ClientMain = () => {
               <div className="mt-3 p-3 rounded-3 text-center border-0 shadow-sm" style={{ backgroundColor: "#e8f8f5" }}>
                 <span className="fw-bold h5 d-block mb-1" style={{ color: "#16a085" }}>{caloriasTotales} / 2000 kcal</span>
                 <div className="progress mb-1" style={{ height: "6px" }}>
-                  <div className="progress-bar" role="progressbar" style={{ width: `${(caloriasTotales / 2000) * 100}%`, backgroundColor: "#1abc9c" }}></div>
+                  <div className="progress-bar" role="progressbar" style={{ width: `${Math.min((caloriasTotales / 2000) * 100, 100)}%`, backgroundColor: "#1abc9c" }}></div>
                 </div>
               </div>
             </div>
@@ -353,7 +464,7 @@ const ClientMain = () => {
             {vistaActiva === 'medida' && <RegistroMedidas />}
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
-            {/* Marcadores provisionales para las vistas que quedan por hacer */}
+            {/* FALTAAA */}
             {vistaActiva === 'recetas' && <div className="card p-4"><h3>Gestión de Recetas</h3></div>}
           </div>
         )}
