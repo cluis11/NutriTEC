@@ -94,7 +94,22 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public Task<IActionResult> EliminarProducto(int id) => throw new NotImplementedException();
+        public IActionResult EliminarProducto(int id)
+        {
+            try
+            {
+                var eliminado = _productoService.EliminarProducto(id);
+
+                if (!eliminado)
+                    return NotFound(new { mensaje = "Producto no encontrado" });
+
+                return Ok(new { mensaje = "Producto eliminado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
 
         [HttpPut("{id}/aprobar")]
         public async Task<IActionResult> AprobarProducto(int id)

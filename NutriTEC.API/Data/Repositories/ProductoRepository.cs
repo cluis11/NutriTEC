@@ -3,6 +3,7 @@ using NutriTEC.API.Models;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
+
 namespace NutriTEC.API.Data.Repositories
 {
     public class ProductoRepository
@@ -15,8 +16,37 @@ namespace NutriTEC.API.Data.Repositories
         }
 
         public Task<bool> CodigoExiste(string codigo) => throw new NotImplementedException();
-        public Task EliminarProducto(int id) => throw new NotImplementedException();
-        public Task<bool> EstaEnUso(int id) => throw new NotImplementedException();
+        public bool ProductoEstaEnUso(int idProducto)
+        {
+            using var connection = _db.GetConnection();
+            connection.Open();
+
+            string query = @"
+                SELECT COUNT(*)
+                FROM RecetaProducto
+                WHERE id_producto = @idProducto
+            ";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@idProducto", idProducto);
+
+            int cantidad = (int)command.ExecuteScalar();
+
+            return cantidad > 0;
+        }
+
+        public bool EliminarProducto(int id)
+        {
+            using var connection = _db.GetConnection();
+            connection.Open();
+
+            using var command = new SqlCommand("sp_EliminarProducto", connection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@id_producto", id);
+
+            command.ExecuteNonQuery();
+            return true;
+        }
 
         public async Task<List<Producto>> ObtenerProductosAprobados()
         {
@@ -167,6 +197,32 @@ namespace NutriTEC.API.Data.Repositories
             command.Parameters.AddWithValue("@estado", producto.Estado);
 
             var id = (int)await command.ExecuteScalarAsync();
+
+            if (producto.Vitaminas != null)
+            {
+                foreach (var vitamina in producto.Vitaminas)
+                {
+                    var queryVitamina = @"
+                        INSERT INTO VitaminasxProducto
+                        (
+                            id_producto,
+                            vitamina
+                        )
+                        VALUES
+                        (
+                            @id_producto,
+                            @vitamina
+                        )";
+
+                    using var commandVitamina = new SqlCommand(queryVitamina, connection);
+
+                    commandVitamina.Parameters.AddWithValue("@id_producto", id);
+                    commandVitamina.Parameters.AddWithValue("@vitamina", vitamina);
+
+                    await commandVitamina.ExecuteNonQueryAsync();
+                }
+            }
+
             return id;
         }
 
