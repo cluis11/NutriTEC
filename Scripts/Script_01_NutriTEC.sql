@@ -197,16 +197,64 @@ CREATE TABLE RegistroxProducto (
     CONSTRAINT FK_RxP_Producto
         FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
+-- ============================================================
+-- SP MAX DE CALORIAS
+-- ============================================================
+CREATE PROCEDURE sp_ExcesoCalorico
+    @idCliente INT,
+    @fecha DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Inicializar con valores base
+    DECLARE @caloriasConsumidas DECIMAL(7,2) = 0.00;
+    DECLARE @consumoMaximo DECIMAL(7,2) = 2000.00;
+
+    -- 1. Calcular el consumo acumulado 
+    SELECT @caloriasConsumidas = SUM(rp.Cantidad * p.Energia)
+    FROM Registro_Diario rd
+    INNER JOIN RegistroxProducto rp ON rd.id_registro = rp.id_registro
+    INNER JOIN Producto p ON RP.id_producto = P.id_producto
+    WHERE rd.id_cliente = @idCliente AND rd.Fecha = @fecha;
+
+    -- 2. Obtener meta del cliente
+    SELECT @consumoMaximo = Consumo_maximo 
+    FROM Cliente 
+    WHERE id_usuario = @idCliente;
+
+    -- 3. Retornar datos si se superó el límite 
+    IF (@caloriasConsumidas > @consumoMaximo)
+    BEGIN
+        SELECT 
+            N'¡Alerta, Has superado tu límite permitido de Calorias!' AS MensajeAlerta,
+            @caloriasConsumidas AS TotalConsumido,
+            @consumoMaximo AS LimiteMaximo;
+    END
+END;
+GO
+-- ============================================================
+-- Vista 1 -- VISTA DE REGISTRO
+-- ============================================================
+CREATE VIEW Vista_RegistroDiario AS
+SELECT 
+    rd.id_cliente,
+    rd.Fecha,
+    rd.Tiempo,
+    p.Descripcion AS Producto,
+    rxp.Cantidad,
+    (p.Energia * rxp.Cantidad) AS Calorias 
+FROM Registro_Diario rd
+INNER JOIN RegistroxProducto rxp 
+ON rd.id_registro = rxp.id_registro
+INNER JOIN Producto p 
+ON rxp.id_producto = p.id_producto;
+GO
 
 
 -- ------------------------------------------------------------
--- Vista 1 — Pacientes sin Nutricionista
+-- Vista 2 — Pacientes sin Nutricionista
 -- ------------------------------------------------------------
-GO
-IF OBJECT_ID('dbo.vw_ClientesSinNutricionista', 'V') IS NOT NULL
-    DROP VIEW dbo.vw_ClientesSinNutricionista;
-GO
-
 CREATE VIEW dbo.vw_ClientesSinNutricionista AS
 SELECT 
     c.id_usuario AS id, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais 
@@ -217,13 +265,8 @@ WHERE cxn.id_nutricionista IS NULL;
 GO
 
 -- ------------------------------------------------------------
--- Vista 2 — Pacientes Activos por Nutricionista
+-- Vista 3 — Pacientes Activos por Nutricionista
 -- ------------------------------------------------------------
-GO
-IF OBJECT_ID('dbo.vw_PacientesActivos', 'V') IS NOT NULL
-    DROP VIEW dbo.vw_PacientesActivos;
-GO
-
 CREATE VIEW dbo.vw_PacientesActivos AS
 SELECT 
     cxn.id_nutricionista, u.id_usuario, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais, c.Consumo_maximo
@@ -233,13 +276,8 @@ INNER JOIN ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente;
 GO
 
 -- -------------------------------------------------------------- 
--- Vista 3 — Planes del Nutricionista (Calorías Reales)
+-- Vista 4 — Planes del Nutricionista (Calorías Reales)
 -- --------------------------------------------------------------
-GO
-IF OBJECT_ID('dbo.vw_PlanNutricionista', 'V') IS NOT NULL
-    DROP VIEW dbo.vw_PlanNutricionista;
-GO
-
 CREATE VIEW dbo.vw_PlanNutricionista AS
 SELECT 
     p.id_nutricionista,
@@ -251,19 +289,10 @@ LEFT JOIN ProductoxPlan pxp ON p.id_plan = pxp.id_plan
 LEFT JOIN Producto prod ON pxp.id_producto = prod.id_producto
 GROUP BY p.id_nutricionista, p.id_plan, p.Nombre;
 GO
- 
--- Verificacion rapida: deberia mostrar 1295 para el Plan Mantenimiento (id_plan = 2)
-SELECT * FROM dbo.vw_PlanNutricionista ORDER BY id_plan;
-GO
 
 -- ------------------------------------------------------------
 -- Trigger 1 — Validacion de calorías al asignar un plan
 -- ------------------------------------------------------------
-GO
-IF OBJECT_ID('dbo.trg_ValidarCaloriasPlan', 'TR') IS NOT NULL
-    DROP TRIGGER dbo.trg_ValidarCaloriasPlan;
-GO
-
 CREATE TRIGGER dbo.trg_ValidarCaloriasPlan
 ON PlanxCliente  
 AFTER INSERT

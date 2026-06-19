@@ -16,6 +16,6 @@ namespace NutriTEC.API.Models
         public decimal Calcio { get; set; }
         public decimal Hierro { get; set; }
         public string Estado { get; set; }
-        public List<string> Vitaminas { get; set; }
+        public List<string> Vitaminas { get; set; } = new List<string>();
     }
 }
