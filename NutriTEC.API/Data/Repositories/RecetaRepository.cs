@@ -169,10 +169,90 @@ namespace NutriTEC.API.Data.Repositories
             return recetas;
         }
 
-        public Task AgregarProducto(int id_receta, ProductoxReceta producto) => throw new NotImplementedException();
+        public async Task ActualizarNombreReceta(int id, string nombre)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                UPDATE Receta
+                SET Nombre = @nombre
+                WHERE id_receta = @id_receta";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id_receta", id);
+            command.Parameters.AddWithValue("@nombre", nombre);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task AgregarProducto(int id_receta, ProductoxReceta producto)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                INSERT INTO ProductoxReceta (id_receta, id_producto, Cantidad)
+                VALUES (@id_receta, @id_producto, @cantidad)";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id_receta", id_receta);
+            command.Parameters.AddWithValue("@id_producto", producto.Id_producto);
+            command.Parameters.AddWithValue("@cantidad", producto.Cantidad);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task EliminarProductoDeReceta(int id_receta, int id_producto)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            var query = @"
+                DELETE FROM ProductoxReceta
+                WHERE id_receta = @id_receta
+                AND id_producto = @id_producto";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id_receta", id_receta);
+            command.Parameters.AddWithValue("@id_producto", id_producto);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
         public Task<bool> ProductoExisteEnReceta(int id_receta, int id_producto) => throw new NotImplementedException();
-        public Task EliminarProductoDeReceta(int id_receta, int id_producto) => throw new NotImplementedException();
-        public Task ActualizarNombreReceta(int id, string nombre) => throw new NotImplementedException();
-        public Task EliminarReceta(int id) => throw new NotImplementedException();
+        public async Task EliminarReceta(int id)
+        {
+            using var connection = _db.GetConnection();
+            await connection.OpenAsync();
+
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var deleteProductos = @"
+                    DELETE FROM ProductoxReceta
+                    WHERE id_receta = @id_receta";
+
+                using var commandProductos = new SqlCommand(deleteProductos, connection, transaction);
+                commandProductos.Parameters.AddWithValue("@id_receta", id);
+                await commandProductos.ExecuteNonQueryAsync();
+
+                var deleteReceta = @"
+                    DELETE FROM Receta
+                    WHERE id_receta = @id_receta";
+
+                using var commandReceta = new SqlCommand(deleteReceta, connection, transaction);
+                commandReceta.Parameters.AddWithValue("@id_receta", id);
+                await commandReceta.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
     }
 }

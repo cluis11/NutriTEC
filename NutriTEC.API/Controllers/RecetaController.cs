@@ -68,16 +68,124 @@ namespace NutriTEC.API.Controllers
             return Ok(recetas);
         }
 
-        [HttpPost("{id}/producto")]
-        public Task<IActionResult> AgregarProducto(int id, [FromBody] ProductoxReceta producto) => throw new NotImplementedException();
+        [HttpPost("{id_receta}/producto")]
+        public async Task<IActionResult> AgregarProducto(int id_receta, [FromBody] ProductoxReceta producto)
+        {
+            try
+            {
+                await _recetaService.AgregarProducto(id_receta, producto);
 
-        [HttpDelete("{id}/producto/{id_producto}")]
-        public Task<IActionResult> EliminarProductoDeReceta(int id, int id_producto) => throw new NotImplementedException();
+                return Ok(new
+                {
+                    mensaje = "Producto agregado a la receta correctamente."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al agregar producto a receta.",
+                    detalle = ex.Message
+                });
+            }
+        }
 
-        [HttpPut("{id}")]
-        public Task<IActionResult> ActualizarNombreReceta(int id, [FromBody] object request) => throw new NotImplementedException();
+        [HttpDelete("{id_receta}/producto/{id_producto}")]
+        public async Task<IActionResult> EliminarProductoDeReceta(int id_receta, int id_producto)
+        {
+            try
+            {
+                await _recetaService.EliminarProductoDeReceta(id_receta, id_producto);
+
+                return Ok(new
+                {
+                    mensaje = "Producto eliminado de la receta correctamente."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al eliminar producto de receta.",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("{id}/nombre")]
+        public async Task<IActionResult> ActualizarNombreReceta(int id, [FromBody] Receta receta)
+        {
+            try
+            {
+                await _recetaService.ActualizarNombreReceta(id, receta.Nombre);
+
+                return Ok(new
+                {
+                    mensaje = "Nombre de receta actualizado correctamente."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al actualizar receta.",
+                    detalle = ex.Message
+                });
+            }
+        }
 
         [HttpDelete("{id}")]
-        public Task<IActionResult> EliminarReceta(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> EliminarReceta(int id)
+        {
+            try
+            {
+                await _recetaService.EliminarReceta(id);
+
+                return Ok(new
+                {
+                    mensaje = "Receta eliminada correctamente."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al eliminar receta.",
+                    detalle = ex.Message
+                });
+            }
+        }
     }
 }
