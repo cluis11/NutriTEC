@@ -6,8 +6,8 @@ import '../App.css';
 // Importamos los módulos de cada seccion
 // ==========================================
 import RegistrarCliente from './clientSearch';
-import AsignarPlan from './createPlan';
-import GestionPlan from './nuevoPlan';
+import AsignarPlan from './assignPlan';
+import GestionPlan from './GPlan';
 // Descomentacuando cuando se crea los archivos
 // import RegistrarCuenta from './RegistrarCuenta';
 // import CatalogoProductos from './CatalogoProductos';

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Main from './pages/main';
 import Paciente from './pages/clientSearch';
-import Plan from './pages/createPlan';
+import Plan from './pages/GPlan';
 // 1. Importar Archivos
 
 // 2. Definir Rutas
