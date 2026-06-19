@@ -25,9 +25,35 @@ function Productos() {
     hierro: ""
   });
 
+  const [vitaminas, setVitaminas] = useState([
+    { nombre: "" }
+  ]);
+
   useEffect(() => {
     obtenerProductos();
   }, []);
+
+  const eliminarProducto = async (id) => {
+    const confirmar = window.confirm("¿Seguro que desea eliminar este producto?");
+
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch(`http://localhost:5108/api/producto/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || "Error al eliminar producto");
+      }
+
+      alert("Producto eliminado correctamente.");
+      obtenerProductos();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const obtenerProductos = async () => {
     try {
@@ -104,22 +130,45 @@ function Productos() {
     });
   };
 
+  const manejarCambioVitamina = (index, e) => {
+    const { name, value } = e.target;
+    const nuevasVitaminas = [...vitaminas];
+
+    nuevasVitaminas[index][name] = value;
+    setVitaminas(nuevasVitaminas);
+  };
+
+  const agregarVitamina = () => {
+    setVitaminas([...vitaminas, { nombre: "", cantidad: "" }]);
+  };
+
+  const eliminarVitaminaFormulario = (index) => {
+    const nuevasVitaminas = vitaminas.filter((_, i) => i !== index);
+    setVitaminas(nuevasVitaminas);
+  };
+
+
   const crearProducto = async (e) => {
     e.preventDefault();
 
     try {
       const productoParaEnviar = {
-        ...nuevoProducto,
-        id_usuario: Number(nuevoProducto.id_usuario),
-        tamano: Number(nuevoProducto.tamano),
-        porcion: Number(nuevoProducto.porcion),
-        energia: Number(nuevoProducto.energia),
-        grasa: Number(nuevoProducto.grasa),
-        sodio: Number(nuevoProducto.sodio),
-        carbohidratos: Number(nuevoProducto.carbohidratos),
-        proteina: Number(nuevoProducto.proteina),
-        calcio: Number(nuevoProducto.calcio),
-        hierro: Number(nuevoProducto.hierro)
+        Id_usuario: Number(nuevoProducto.id_usuario),
+        Codigo: nuevoProducto.codigo,
+        Descripcion: nuevoProducto.descripcion,
+        Tamano: Number(nuevoProducto.tamano),
+        Porcion: Number(nuevoProducto.porcion),
+        Energia: Number(nuevoProducto.energia),
+        Grasa: Number(nuevoProducto.grasa),
+        Sodio: Number(nuevoProducto.sodio),
+        Carbohidratos: Number(nuevoProducto.carbohidratos),
+        Proteina: Number(nuevoProducto.proteina),
+        Calcio: Number(nuevoProducto.calcio),
+        Hierro: Number(nuevoProducto.hierro),
+        Estado: "pendiente",
+        Vitaminas: vitaminas
+          .map((vitamina) => vitamina.nombre)
+          .filter((vitamina) => vitamina.trim() !== "")
       };
 
       const response = await fetch("http://localhost:5108/api/producto", {
@@ -131,10 +180,13 @@ function Productos() {
       });
 
       if (!response.ok) {
-        throw new Error("Error al crear producto.");
+        const errorData = await response.json();
+        throw new Error(errorData.detalle || errorData.mensaje || "Error al crear producto.");
       }
 
       alert("Producto creado correctamente.");
+
+      setVitaminas([{ nombre: "" }]);
 
       setNuevoProducto({
         id_usuario: 1,
@@ -297,7 +349,7 @@ function Productos() {
                       <th>Energía</th>
                       <th>Proteína</th>
                       <th>Estado</th>
-                      <th>Editar</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
 
@@ -313,16 +365,20 @@ function Productos() {
                         <td>
                           <button
                             type="button"
-                            className="btn btn-warning btn-sm"
+                            className="btn btn-warning btn-sm me-2"
                             title="Editar producto"
                             onClick={() => iniciarEdicion(producto)}
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              padding: 0
-                            }}
                           >
                             ✏️
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            title="Eliminar producto"
+                            onClick={() => eliminarProducto(producto.id_producto)}
+                          >
+                            🗑️
                           </button>
                         </td>
                       </tr>
@@ -576,6 +632,41 @@ function Productos() {
                   </div>
                 ))}
               </div>
+
+              <h3 className="h6 text-secondary mt-3">Vitaminas</h3>
+
+              {vitaminas.map((vitamina, index) => (
+                <div className="row mb-2" key={index}>
+                  <div className="col-5">
+                    <input
+                      className="form-control"
+                      name="nombre"
+                      placeholder="Ej: Vitamina C"
+                      value={vitamina.nombre}
+                      onChange={(e) => manejarCambioVitamina(index, e)}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100"
+                      onClick={() => eliminarVitaminaFormulario(index)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="btn btn-outline-primary w-100 mb-3"
+                onClick={agregarVitamina}
+              >
+                Agregar vitamina
+              </button>
 
               <button type="submit" className="btn btn-success w-100 mt-2">
                 Guardar producto
