@@ -1,306 +1,131 @@
-using NutriTEC.API.Data.Connection;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using NutriTEC.API.Data;
 using NutriTEC.API.Models;
 using Microsoft.Data.SqlClient;
-using System.Data;
-
 
 namespace NutriTEC.API.Data.Repositories
 {
     public class ProductoRepository
     {
-        private readonly DatabaseConnection _db;
+        private readonly NutriTECContext _context;
 
-        public ProductoRepository(DatabaseConnection db)
+        public ProductoRepository(NutriTECContext context)
         {
-            _db = db;
+            _context = context;
         }
 
-        public Task<bool> CodigoExiste(string codigo) => throw new NotImplementedException();
-        public bool ProductoEstaEnUso(int idProducto)
+        public async Task<bool> CodigoExiste(string codigo)
         {
-            using var connection = _db.GetConnection();
-            connection.Open();
-
-            string query = @"
-                SELECT COUNT(*)
-                FROM RecetaProducto
-                WHERE id_producto = @idProducto
-            ";
-
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@idProducto", idProducto);
-
-            int cantidad = (int)command.ExecuteScalar();
-
-            return cantidad > 0;
-        }
-
-        public bool EliminarProducto(int id)
-        {
-            using var connection = _db.GetConnection();
-            connection.Open();
-
-            using var command = new SqlCommand("sp_EliminarProducto", connection);
-            command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@id_producto", id);
-
-            command.ExecuteNonQuery();
-            return true;
-        }
-
-        public async Task<List<Producto>> ObtenerProductosAprobados()
-        {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            var query = @"
-                SELECT *
-                FROM Producto
-                WHERE Estado = 'aprobado'
-                ORDER BY Descripcion ASC";
-
-            using var command = new SqlCommand(query, connection);
-            using var reader = await command.ExecuteReaderAsync();
-
-            var productos = new List<Producto>();
-
-            while (await reader.ReadAsync())
-            {
-                productos.Add(new Producto
-                {
-                    Id_producto = reader.GetInt32(reader.GetOrdinal("id_producto")),
-                    Id_usuario = reader.GetInt32(reader.GetOrdinal("id_usuario")),
-                    Codigo = reader.GetString(reader.GetOrdinal("Codigo")),
-                    Descripcion = reader.GetString(reader.GetOrdinal("Descripcion")),
-                    Tamano = reader.GetDecimal(reader.GetOrdinal("Tamano")),
-                    Porcion = reader.GetDecimal(reader.GetOrdinal("Porcion")),
-                    Energia = reader.GetDecimal(reader.GetOrdinal("Energia")),
-                    Grasa = reader.GetDecimal(reader.GetOrdinal("Grasa")),
-                    Sodio = reader.GetDecimal(reader.GetOrdinal("Sodio")),
-                    Carbohidratos = reader.GetDecimal(reader.GetOrdinal("Carbohidratos")),
-                    Proteina = reader.GetDecimal(reader.GetOrdinal("Proteina")),
-                    Calcio = reader.GetDecimal(reader.GetOrdinal("Calcio")),
-                    Hierro = reader.GetDecimal(reader.GetOrdinal("Hierro")),
-                    Estado = reader.GetString(reader.GetOrdinal("Estado"))
-                });
-            }
-
-            return productos;
-        }
-
-        public async Task ActualizarProducto(int id, Producto producto)
-        {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            var query = @"
-                UPDATE Producto
-                SET
-                    Codigo = @codigo,
-                    Descripcion = @descripcion,
-                    Tamano = @tamano,
-                    Porcion = @porcion,
-                    Energia = @energia,
-                    Grasa = @grasa,
-                    Sodio = @sodio,
-                    Carbohidratos = @carbohidratos,
-                    Proteina = @proteina,
-                    Calcio = @calcio,
-                    Hierro = @hierro
-                WHERE id_producto = @id_producto";
-
-            using var command = new SqlCommand(query, connection);
-
-            command.Parameters.AddWithValue("@id_producto", id);
-            command.Parameters.AddWithValue("@codigo", producto.Codigo);
-            command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
-            command.Parameters.AddWithValue("@tamano", producto.Tamano);
-            command.Parameters.AddWithValue("@porcion", producto.Porcion);
-            command.Parameters.AddWithValue("@energia", producto.Energia);
-            command.Parameters.AddWithValue("@grasa", producto.Grasa);
-            command.Parameters.AddWithValue("@sodio", producto.Sodio);
-            command.Parameters.AddWithValue("@carbohidratos", producto.Carbohidratos);
-            command.Parameters.AddWithValue("@proteina", producto.Proteina);
-            command.Parameters.AddWithValue("@calcio", producto.Calcio);
-            command.Parameters.AddWithValue("@hierro", producto.Hierro);
-
-            await command.ExecuteNonQueryAsync();
-        }
-
-        public async Task AprobarProducto(int id)
-        {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            using var command = new SqlCommand("sp_AprobarProducto", connection);
-            command.CommandType = CommandType.StoredProcedure;
-
-            command.Parameters.AddWithValue("@id_producto", id);
-
-            await command.ExecuteNonQueryAsync();
+            return await _context.Producto
+                .AnyAsync(p => p.Codigo == codigo);
         }
 
         public async Task<int> CrearProducto(Producto producto)
         {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            var query = @"
-                INSERT INTO Producto
-                (
-                    id_usuario,
-                    Codigo,
-                    Descripcion,
-                    Tamano,
-                    Porcion,
-                    Energia,
-                    Grasa,
-                    Sodio,
-                    Carbohidratos,
-                    Proteina,
-                    Calcio,
-                    Hierro,
-                    Estado
-                )
-                OUTPUT INSERTED.id_producto
-                VALUES
-                (
-                    @id_usuario,
-                    @codigo,
-                    @descripcion,
-                    @tamano,
-                    @porcion,
-                    @energia,
-                    @grasa,
-                    @sodio,
-                    @carbohidratos,
-                    @proteina,
-                    @calcio,
-                    @hierro,
-                    @estado
-                )";
-
-            using var command = new SqlCommand(query, connection);
-
-            command.Parameters.AddWithValue("@id_usuario", producto.Id_usuario);
-            command.Parameters.AddWithValue("@codigo", producto.Codigo);
-            command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
-            command.Parameters.AddWithValue("@tamano", producto.Tamano);
-            command.Parameters.AddWithValue("@porcion", producto.Porcion);
-            command.Parameters.AddWithValue("@energia", producto.Energia);
-            command.Parameters.AddWithValue("@grasa", producto.Grasa);
-            command.Parameters.AddWithValue("@sodio", producto.Sodio);
-            command.Parameters.AddWithValue("@carbohidratos", producto.Carbohidratos);
-            command.Parameters.AddWithValue("@proteina", producto.Proteina);
-            command.Parameters.AddWithValue("@calcio", producto.Calcio);
-            command.Parameters.AddWithValue("@hierro", producto.Hierro);
-            command.Parameters.AddWithValue("@estado", producto.Estado);
-
-            var id = (int)await command.ExecuteScalarAsync();
+            _context.Producto.Add(producto);
+            await _context.SaveChangesAsync();
 
             if (producto.Vitaminas != null)
             {
                 foreach (var vitamina in producto.Vitaminas)
                 {
-                    var queryVitamina = @"
-                        INSERT INTO VitaminasxProducto
-                        (
-                            id_producto,
-                            vitamina
-                        )
-                        VALUES
-                        (
-                            @id_producto,
-                            @vitamina
-                        )";
-
-                    using var commandVitamina = new SqlCommand(queryVitamina, connection);
-
-                    commandVitamina.Parameters.AddWithValue("@id_producto", id);
-                    commandVitamina.Parameters.AddWithValue("@vitamina", vitamina);
-
-                    await commandVitamina.ExecuteNonQueryAsync();
+                    _context.VitaminasxProducto.Add(new VitaminaxProducto
+                    {
+                        Id_producto = producto.Id_producto,
+                        Vitamina = vitamina
+                    });
                 }
+                await _context.SaveChangesAsync();
             }
 
-            return id;
+            return producto.Id_producto;
         }
 
         public async Task<Producto?> ObtenerProducto(int id)
         {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
+            var producto = await _context.Producto
+                .FirstOrDefaultAsync(p => p.Id_producto == id);
 
-            var query = @"
-                SELECT *
-                FROM Producto
-                WHERE id_producto = @id";
+            if (producto == null) return null;
 
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@id", id);
+            producto.Vitaminas = await _context.VitaminasxProducto
+                .Where(v => v.Id_producto == id)
+                .Select(v => v.Vitamina)
+                .ToListAsync();
 
-            using var reader = await command.ExecuteReaderAsync();
-
-            if (await reader.ReadAsync())
-            {
-                return new Producto
-                {
-                    Id_producto = reader.GetInt32(reader.GetOrdinal("id_producto")),
-                    Id_usuario = reader.GetInt32(reader.GetOrdinal("id_usuario")),
-                    Codigo = reader.GetString(reader.GetOrdinal("Codigo")),
-                    Descripcion = reader.GetString(reader.GetOrdinal("Descripcion")),
-                    Tamano = reader.GetDecimal(reader.GetOrdinal("Tamano")),
-                    Porcion = reader.GetDecimal(reader.GetOrdinal("Porcion")),
-                    Energia = reader.GetDecimal(reader.GetOrdinal("Energia")),
-                    Grasa = reader.GetDecimal(reader.GetOrdinal("Grasa")),
-                    Sodio = reader.GetDecimal(reader.GetOrdinal("Sodio")),
-                    Carbohidratos = reader.GetDecimal(reader.GetOrdinal("Carbohidratos")),
-                    Proteina = reader.GetDecimal(reader.GetOrdinal("Proteina")),
-                    Calcio = reader.GetDecimal(reader.GetOrdinal("Calcio")),
-                    Hierro = reader.GetDecimal(reader.GetOrdinal("Hierro")),
-                    Estado = reader.GetString(reader.GetOrdinal("Estado"))
-                };
-            }
-
-            return null;
+            return producto;
         }
+
         public async Task<List<Producto>> ObtenerProductos()
         {
-            using var connection = _db.GetConnection();
+            return await _context.Producto
+                .OrderBy(p => p.Id_producto)
+                .ToListAsync();
+        }
+
+        public async Task<List<Producto>> ObtenerProductosAprobados()
+        {
+            return await _context.Producto
+                .Where(p => p.Estado == "aprobado")
+                .OrderBy(p => p.Descripcion)
+                .ToListAsync();
+        }
+
+        public async Task ActualizarProducto(int id, Producto producto)
+        {
+            var existing = await _context.Producto
+                .FirstOrDefaultAsync(p => p.Id_producto == id);
+
+            if (existing == null) return;
+
+            existing.Codigo = producto.Codigo;
+            existing.Descripcion = producto.Descripcion;
+            existing.Tamano = producto.Tamano;
+            existing.Porcion = producto.Porcion;
+            existing.Energia = producto.Energia;
+            existing.Grasa = producto.Grasa;
+            existing.Sodio = producto.Sodio;
+            existing.Carbohidratos = producto.Carbohidratos;
+            existing.Proteina = producto.Proteina;
+            existing.Calcio = producto.Calcio;
+            existing.Hierro = producto.Hierro;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public bool EliminarProducto(int id)
+        {
+            var connection = _context.Database.GetDbConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "sp_EliminarProducto";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@id_producto", id));
+            command.ExecuteNonQuery();
+
+            return true;
+        }
+
+        public async Task AprobarProducto(int id)
+        {
+            var connection = _context.Database.GetDbConnection();
             await connection.OpenAsync();
 
-            var query = @"
-                SELECT *
-                FROM Producto
-                ORDER BY id_producto ASC";
+            using var command = connection.CreateCommand();
+            command.CommandText = "sp_AprobarProducto";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@id_producto", id));
 
-            using var command = new SqlCommand(query, connection);
-            using var reader = await command.ExecuteReaderAsync();
+            await command.ExecuteNonQueryAsync();
+        }
 
-            var productos = new List<Producto>();
-
-            while (await reader.ReadAsync())
-            {
-                productos.Add(new Producto
-                {
-                    Id_producto = reader.GetInt32(reader.GetOrdinal("id_producto")),
-                    Id_usuario = reader.GetInt32(reader.GetOrdinal("id_usuario")),
-                    Codigo = reader.GetString(reader.GetOrdinal("Codigo")),
-                    Descripcion = reader.GetString(reader.GetOrdinal("Descripcion")),
-                    Tamano = reader.GetDecimal(reader.GetOrdinal("Tamano")),
-                    Porcion = reader.GetDecimal(reader.GetOrdinal("Porcion")),
-                    Energia = reader.GetDecimal(reader.GetOrdinal("Energia")),
-                    Grasa = reader.GetDecimal(reader.GetOrdinal("Grasa")),
-                    Sodio = reader.GetDecimal(reader.GetOrdinal("Sodio")),
-                    Carbohidratos = reader.GetDecimal(reader.GetOrdinal("Carbohidratos")),
-                    Proteina = reader.GetDecimal(reader.GetOrdinal("Proteina")),
-                    Calcio = reader.GetDecimal(reader.GetOrdinal("Calcio")),
-                    Hierro = reader.GetDecimal(reader.GetOrdinal("Hierro")),
-                    Estado = reader.GetString(reader.GetOrdinal("Estado"))
-                });
-            }
-
-            return productos;
+        public bool ProductoEstaEnUso(int idProducto)
+        {
+            return _context.ProductoxReceta.Any(pr => pr.Id_producto == idProducto) ||
+                   _context.ProductoxPlan.Any(pp => pp.Id_producto == idProducto) ||
+                   _context.RegistroxProducto.Any(rp => rp.Id_producto == idProducto);
         }
     }
 }

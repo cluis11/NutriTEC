@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using NutriTEC.API.Data.Connection;
+using NutriTEC.API.Data;
 using NutriTEC.API.Data.Repositories;
 using NutriTEC.API.Services;
 
@@ -42,11 +43,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ============================================================
-// INYECCION DE DEPENDENCIAS
+// ENTITY FRAMEWORK
 // ============================================================
 
-// Connection
-builder.Services.AddSingleton<DatabaseConnection>();
+builder.Services.AddDbContext<NutriTECContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ============================================================
+// INYECCION DE DEPENDENCIAS
+// ============================================================
 
 // Repositories
 builder.Services.AddScoped<AuthRepository>();
@@ -67,6 +72,7 @@ builder.Services.AddScoped<PlanService>();
 builder.Services.AddScoped<RecetaService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<MedidaService>();
+
 // ============================================================
 // PIPELINE
 // ============================================================
