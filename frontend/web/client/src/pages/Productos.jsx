@@ -6,6 +6,8 @@ function Productos() {
   const [error, setError] = useState("");
 
   const [idBusqueda, setIdBusqueda] = useState("");
+  const [nombreBusqueda, setNombreBusqueda] = useState("");
+  const [codigoBusqueda, setCodigoBusqueda] = useState("");
   const [productoEncontrado, setProductoEncontrado] = useState(null);
   const [productoEditando, setProductoEditando] = useState(null);
   const [mensajeBusqueda, setMensajeBusqueda] = useState("");
@@ -268,6 +270,18 @@ function Productos() {
     return <p>Error: {error}</p>;
   }
 
+  const productosFiltrados = productos.filter((producto) => {
+    const coincideNombre = producto.descripcion
+      ?.toLowerCase()
+      .includes(nombreBusqueda.toLowerCase());
+
+    const coincideCodigo = producto.codigo
+      ?.toLowerCase()
+      .includes(codigoBusqueda.toLowerCase());
+
+    return coincideNombre && coincideCodigo;
+  });
+
   return (
     <div
       className="container-fluid py-4"
@@ -312,6 +326,30 @@ function Productos() {
                   Limpiar
                 </button>
               </div>
+
+              <div className="mb-4">
+                <label className="form-label">Buscar producto por nombre</label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={nombreBusqueda}
+                  onChange={(e) => setNombreBusqueda(e.target.value)}
+                  placeholder="Ej: proteína"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label">Buscar producto por código de barras</label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={codigoBusqueda}
+                  onChange={(e) => setCodigoBusqueda(e.target.value)}
+                  placeholder="Ej: 7441001234567"
+                />
+              </div>
             </form>
 
             {mensajeBusqueda && <p>{mensajeBusqueda}</p>}
@@ -323,7 +361,7 @@ function Productos() {
               </div>
             )}
 
-            {productos.length === 0 ? (
+            {productosFiltrados.length === 0 ? (
               <p>No hay productos registrados.</p>
             ) : (
               <div
@@ -354,7 +392,7 @@ function Productos() {
                   </thead>
 
                   <tbody>
-                    {productos.map((producto) => (
+                    {productosFiltrados.map((producto) => (
                       <tr key={producto.id_producto}>
                         <td>{producto.id_producto}</td>
                         <td>{producto.codigo}</td>
