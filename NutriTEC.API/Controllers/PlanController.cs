@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using NutriTEC.API.Models;
 using NutriTEC.API.Services;
+using NutriTEC.API.DTOs;
+using Microsoft.Data.SqlClient;
 
 namespace NutriTEC.API.Controllers
 {
@@ -116,9 +118,37 @@ namespace NutriTEC.API.Controllers
             }
         }
 
-        
+        [HttpGet("cliente/{id_cliente}/asignaciones")]
+        public async Task<IActionResult> ObtenerAsignacionesCliente(int id_cliente)
+        {
+            try
+            {
+                var asignaciones = await _planService.ObtenerAsignacionesCliente(id_cliente);
+                return Ok(asignaciones); 
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
 
-        [HttpPost("{id}/asignar")]
-        public Task<IActionResult> AsignarPlan(int id, [FromBody] object request) => throw new NotImplementedException();
+        [HttpPost("asignar")]
+        public async Task<IActionResult> AsignarPlan([FromBody] AsignarPlanDTO asignacion)
+        {
+            try
+            {
+                await _planService.AsignarPlan(asignacion);
+                return Ok(new { mensaje = "Plan asignado correctamente." });
+            }
+            catch (SqlException ex)
+            {
+                // Captura el mensaje personalizado lanzado por el TRIGGER en SQL Server
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
     }
 }

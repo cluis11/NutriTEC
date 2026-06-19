@@ -76,6 +76,19 @@ namespace NutriTEC.API.Services
         {
             return _planRepository.AsignarCliente(id_nutricionista, id_cliente);
         }
-        public Task AsignarPlan(int id_plan, int id_cliente, int id_nutricionista, DateTime inicio, DateTime fin) => throw new NotImplementedException();
+
+        public Task<List<AsignarPlanDTO>> ObtenerAsignacionesCliente(int id_cliente)
+        {
+            return _planRepository.ObtenerAsignacionesCliente(id_cliente);
+        }
+
+        public async Task AsignarPlan(AsignarPlanDTO asignacion)
+        {
+            if (asignacion.Fecha_inicio >= asignacion.Fecha_fin)
+            {
+                throw new Exception("La fecha de inicio debe ser anterior a la fecha de fin.");
+            }
+            await _planRepository.AsignarPlan(asignacion.Id_plan, asignacion.Id_cliente, asignacion.Fecha_inicio, asignacion.Fecha_fin);
+        }
     }
 }

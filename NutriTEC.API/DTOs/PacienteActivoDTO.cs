@@ -9,6 +9,7 @@ namespace NutriTEC.API.DTOs
         public DateTime Fecha_nacimiento { get; set; }
         public string Correo { get; set; }
         public string Pais { get; set; }
+        public int Consumo_maximo { get; set; }
 
         public int Edad => DateTime.Today.Year - Fecha_nacimiento.Year - 
             (DateTime.Today.DayOfYear < Fecha_nacimiento.DayOfYear ? 1 : 0);

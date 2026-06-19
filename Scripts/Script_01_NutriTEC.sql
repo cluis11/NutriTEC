@@ -210,9 +210,9 @@ GO
 CREATE VIEW dbo.vw_ClientesSinNutricionista AS
 SELECT 
     c.id_usuario AS id, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais 
-FROM dbo.Usuario u
-INNER JOIN dbo.Cliente c ON u.id_usuario = c.id_usuario
-LEFT JOIN dbo.ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente
+FROM Usuario u
+INNER JOIN Cliente c ON u.id_usuario = c.id_usuario
+LEFT JOIN ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente
 WHERE cxn.id_nutricionista IS NULL;
 GO
 
@@ -226,8 +226,96 @@ GO
 
 CREATE VIEW dbo.vw_PacientesActivos AS
 SELECT 
-    cxn.id_nutricionista, u.id_usuario, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais
+    cxn.id_nutricionista, u.id_usuario, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Correo, c.Pais, c.Consumo_maximo
 FROM Usuario u
 INNER JOIN Cliente c ON u.id_usuario = c.id_usuario
 INNER JOIN ClientexNutricionista cxn ON c.id_usuario = cxn.id_cliente;
+GO
+
+-- -------------------------------------------------------------- 
+-- Vista 3 — Planes del Nutricionista (Calorías Reales)
+-- --------------------------------------------------------------
+GO
+IF OBJECT_ID('dbo.vw_PlanNutricionista', 'V') IS NOT NULL
+    DROP VIEW dbo.vw_PlanNutricionista;
+GO
+
+CREATE VIEW dbo.vw_PlanNutricionista AS
+SELECT 
+    p.id_nutricionista,
+    p.id_plan, 
+    p.Nombre,
+    ISNULL(SUM(prod.Energia * (pxp.Cantidad / NULLIF(prod.Porcion, 0))), 0) AS Total_Calorias
+FROM PlanAlimentacion p
+LEFT JOIN ProductoxPlan pxp ON p.id_plan = pxp.id_plan
+LEFT JOIN Producto prod ON pxp.id_producto = prod.id_producto
+GROUP BY p.id_nutricionista, p.id_plan, p.Nombre;
+GO
+ 
+-- Verificacion rapida: deberia mostrar 1295 para el Plan Mantenimiento (id_plan = 2)
+SELECT * FROM dbo.vw_PlanNutricionista ORDER BY id_plan;
+GO
+
+-- ------------------------------------------------------------
+-- Trigger 1 — Validacion de calorías al asignar un plan
+-- ------------------------------------------------------------
+GO
+IF OBJECT_ID('dbo.trg_ValidarCaloriasPlan', 'TR') IS NOT NULL
+    DROP TRIGGER dbo.trg_ValidarCaloriasPlan;
+GO
+
+CREATE TRIGGER dbo.trg_ValidarCaloriasPlan
+ON PlanxCliente  
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_plan INT;
+    DECLARE @id_cliente INT;
+    DECLARE @inicio_nuevo DATE;
+    DECLARE @fin_nuevo DATE;
+    DECLARE @total_calorias_plan INT;
+    DECLARE @consumo_maximo_cliente INT;
+
+    -- 1. Obtener los datos del registro recién insertado
+    SELECT @id_plan = id_plan, @id_cliente = id_cliente, @inicio_nuevo = Inicio, @fin_nuevo = Fin FROM inserted;
+
+    -- 2. Validacion de fechas
+    IF (
+        SELECT COUNT(*) 
+        FROM PlanxCliente
+        WHERE id_cliente = @id_cliente 
+          AND ( @inicio_nuevo <= Fin AND @fin_nuevo >= Inicio )
+    ) > 1
+    BEGIN
+        RAISERROR('El paciente ya cuenta con un plan de alimentación activo o asignado en el rango de fechas seleccionado.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+
+    -- 3. Calcular el total de calorías sumando (Energia * Cantidad) del plan
+    SELECT @total_calorias_plan = ISNULL(SUM(p.Energia * (pxp.Cantidad / NULLIF(p.Porcion, 0)) ), 0)
+    FROM ProductoxPlan pxp
+    INNER JOIN Producto p ON pxp.id_producto = p.id_producto
+    WHERE pxp.id_plan = @id_plan;
+
+    -- 4. Obtener el consumo máximo diario permitido para el cliente
+    SELECT @consumo_maximo_cliente = Consumo_maximo
+    FROM Cliente
+    WHERE id_usuario = @id_cliente;
+
+    -- 5. Validar la restricción de calorías
+    IF (@total_calorias_plan > @consumo_maximo_cliente)
+    BEGIN
+        DECLARE @ErrorMessage NVARCHAR(250);
+        SET @ErrorMessage = FORMATMESSAGE(
+            'Asignación rechazada: El plan "%d" genera un total de %d calorías, lo cual supera el consumo máximo permitido para este cliente (%d calorías).', 
+            @id_plan, @total_calorias_plan, @consumo_maximo_cliente
+        );
+        RAISERROR(@ErrorMessage, 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+END;
 GO

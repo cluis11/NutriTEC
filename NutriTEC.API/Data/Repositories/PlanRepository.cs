@@ -82,7 +82,9 @@ namespace NutriTEC.API.Data.Repositories
             await conn.OpenAsync();
 
             using var cmd = new SqlCommand(
-                        "SELECT id_plan, Nombre FROM PlanAlimentacion WHERE id_nutricionista = @id_nutricionista", conn);
+                        "SELECT id_plan, Nombre, Total_Calorias " +
+                        "FROM vw_PlanNutricionista " + 
+                        "WHERE id_nutricionista = @id_nutricionista", conn);
             cmd.Parameters.AddWithValue("@id_nutricionista", id_nutricionista);
 
             var planes = new List<PlanResumenDTO>();
@@ -92,7 +94,9 @@ namespace NutriTEC.API.Data.Repositories
                 planes.Add(new PlanResumenDTO
                 {
                     Id_plan = reader.GetInt32(0),
-                    Nombre = reader.GetString(1)
+                    Nombre = reader.GetString(1),
+                    Completo = true,
+                    Total_Calorias = Convert.ToInt32(reader.GetDecimal(2))
                 });
             }
             return planes;
@@ -242,7 +246,8 @@ namespace NutriTEC.API.Data.Repositories
                     Ap2 = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                     Fecha_nacimiento = reader.GetDateTime(5),
                     Correo = reader.GetString(6),
-                    Pais = reader.GetString(7)
+                    Pais = reader.GetString(7),
+                    Consumo_maximo = Convert.ToInt32(reader.GetDecimal(8))
                 });
             }
             return pacientes;
@@ -284,7 +289,43 @@ namespace NutriTEC.API.Data.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public Task<bool> ClienteTienePlanActivo(int id_cliente, DateTime inicio, DateTime fin) => throw new NotImplementedException();
-        public Task AsignarPlan(int id_plan, int id_cliente, DateTime inicio, DateTime fin) => throw new NotImplementedException();
+        public async Task<List<AsignarPlanDTO>> ObtenerAsignacionesCliente(int id_cliente)
+        {
+            using var conn = _db.GetConnection();
+            conn.Open();
+
+            using var cmd = new SqlCommand("SELECT id_plan, id_cliente, Inicio, Fin " +
+                "FROM PlanxCliente " +
+                "WHERE id_cliente = @id_cliente", conn);
+            cmd.Parameters.AddWithValue("@id_cliente", id_cliente);
+
+            var asignaciones = new List<AsignarPlanDTO>();
+            using var reader = cmd.ExecuteReader();
+            while (await reader.ReadAsync())
+            {
+                asignaciones.Add(new AsignarPlanDTO
+                {
+                    Id_plan = reader.GetInt32(0),
+                    Id_cliente = reader.GetInt32(1),
+                    Fecha_inicio = reader.GetDateTime(2),
+                    Fecha_fin = reader.GetDateTime(3)
+                });
+            }
+            return asignaciones;
+        }
+        public async Task AsignarPlan(int id_plan, int id_cliente, DateTime inicio, DateTime fin)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            using var cmd = new SqlCommand(
+                "INSERT INTO PlanxCliente (id_plan, id_cliente, Inicio, Fin) "+ 
+                "VALUES (@id_plan, @id_cliente, @inicio, @fin)", conn);
+            cmd.Parameters.AddWithValue("@id_plan", id_plan);
+            cmd.Parameters.AddWithValue("@id_cliente", id_cliente);
+            cmd.Parameters.AddWithValue("@inicio", inicio);
+            cmd.Parameters.AddWithValue("@fin", fin);
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }
