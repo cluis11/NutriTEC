@@ -16,10 +16,40 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpPost("registro")]
-        public Task<IActionResult> Registro([FromBody] Nutricionista nutricionista) => throw new NotImplementedException();
+        public async Task<IActionResult> Registro([FromBody] Nutricionista nutricionista)
+        {
+            try
+            {
+                var id = await _nutricionistaService.Registro(nutricionista);
+                return Ok(new { mensaje = "Registro exitoso", id_usuario = id });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al registrar el nutricionista" });
+            }
+        }
 
         [HttpGet("{id}")]
-        public Task<IActionResult> ObtenerPerfil(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerPerfil(int id)
+        {
+            try
+            {
+                var nutricionista = await _nutricionistaService.ObtenerPerfil(id);
+                return Ok(nutricionista);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al obtener el perfil" });
+            }
+        }
 
         [HttpPut("{id}")]
         public Task<IActionResult> ActualizarPerfil(int id, [FromBody] Nutricionista nutricionista) => throw new NotImplementedException();

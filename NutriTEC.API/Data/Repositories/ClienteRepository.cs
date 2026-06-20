@@ -1,132 +1,173 @@
-using NutriTEC.API.Data.Connection;
-using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using NutriTEC.API.Data;
 using NutriTEC.API.Models;
 using NutriTEC.API.DTOs;
-using System.Data;
 using MongoDB.Driver;
+using Microsoft.Data.SqlClient;
 
 namespace NutriTEC.API.Data.Repositories
 {
     public class ClienteRepository
     {
-        private readonly DatabaseConnection _db;
+        private readonly NutriTECContext _context;
         private readonly IMongoCollection<Retroalimentacion> _retroCollection;
 
-        public ClienteRepository(DatabaseConnection db, MongoDatabaseConnection mongoConnection)
+        public ClienteRepository(NutriTECContext context, MongoDatabaseConnection mongoConnection)
         {
-            _db = db;
+            _context = context;
             _retroCollection = mongoConnection.GetDatabase().GetCollection<Retroalimentacion>("Retroalimentaciones");
         }
 
-        public Task<Cliente> ObtenerCliente(int id) => throw new NotImplementedException();
-        public Task<int> CrearCliente(Cliente cliente) => throw new NotImplementedException();
-        public Task ActualizarCliente(Cliente cliente) => throw new NotImplementedException();
-        public Task<bool> CorreoExiste(string correo) => throw new NotImplementedException();
-        public Task RegistrarMedida(Medida medida) => throw new NotImplementedException();
-        public Task<bool> MedidaExiste(int id_cliente, DateTime fecha) => throw new NotImplementedException();
-        public Task<List<MedidaVariacionDTO>> ObtenerReporteAvance(int id_cliente, DateTime fecha_inicio, DateTime fecha_fin) => throw new NotImplementedException();
-        public async Task<(bool Excedido, string MensajeAlerta)> ExcesoCalorico(int idCliente, DateTime fecha)
+        public async Task<bool> CorreoExiste(string correo)
         {
-            // Inicializar
-            bool estaExcedido = false;
-            string mensajeAlerta = string.Empty;
+            return await _context.Usuario
+                .AnyAsync(u => u.Correo == correo);
+        }
 
-            // Llamar sp
-            using var connection = _db.GetConnection();
+        public async Task<int> CrearCliente(Cliente cliente)
+        {
+            var connection = _context.Database.GetDbConnection();
             await connection.OpenAsync();
-            using (var command = new SqlCommand("sp_ExcesoCalorico", connection))
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SP_RegistrarCliente";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new SqlParameter("@Correo", cliente.Correo));
+            command.Parameters.Add(new SqlParameter("@Contrasena", cliente.Contrasena));
+            command.Parameters.Add(new SqlParameter("@Nombre", cliente.Nombre));
+            command.Parameters.Add(new SqlParameter("@Ap1", cliente.Ap1));
+            command.Parameters.Add(new SqlParameter("@Ap2", (object?)cliente.Ap2 ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Fecha_nacimiento", cliente.Fecha_nacimiento));
+            command.Parameters.Add(new SqlParameter("@Peso", cliente.Peso));
+            command.Parameters.Add(new SqlParameter("@Altura", cliente.Altura));
+            command.Parameters.Add(new SqlParameter("@Pais", cliente.Pais));
+            command.Parameters.Add(new SqlParameter("@Consumo_maximo", cliente.Consumo_maximo));
+
+            var outputParam = new SqlParameter("@id_usuario", SqlDbType.Int)
             {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@idCliente", idCliente);
-                command.Parameters.AddWithValue("@fecha", fecha);
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    if (reader.HasRows && await reader.ReadAsync())
-                    {
-                        estaExcedido = true;
-                        mensajeAlerta = reader.GetString(0);
-                    }
-                }
-            }
-
-            return (estaExcedido, mensajeAlerta);
-        }
-        public async Task<List<ComidaConsumidaDTO>> ObtenerConsumo(int idCliente, DateTime fecha)
-        {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            //implementar la vista
-            var query = @"
-                SELECT Tiempo, Producto, Cantidad, Calorias 
-                FROM Vista_RegistroDiario 
-                WHERE id_cliente = @idCliente AND Fecha = @fecha";
-
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@idCliente", idCliente);
-            command.Parameters.AddWithValue("@fecha", fecha.Date);
-
-            //leer BD y crear lista vacia
-            using var reader = await command.ExecuteReaderAsync();
-            var listaPlana = new List<ComidaConsumidaDTO>();
-
-            //por cada fila crea un nuevo objeto DTO y lo agrega a la lista
-            while (await reader.ReadAsync())
-                {   
-                    listaPlana.Add(new ComidaConsumidaDTO
-                    {
-                        Tiempo = reader.GetString(reader.GetOrdinal("Tiempo")),
-                        Producto = reader.GetString(reader.GetOrdinal("Producto")),
-                        Cantidad = reader.GetDecimal(reader.GetOrdinal("Cantidad")),
-                        Calorias = reader.GetDecimal(reader.GetOrdinal("Calorias"))
-                    });
-                }
-            return listaPlana;
-        }
-        public async Task RegistrarComida(RegistroComidaDTO consumo)
-        {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            var query = @"
-                DECLARE @idRegistro INT;
-
-                -- 1. Buscar si ya existe un registro para ese cliente, fecha y tiempo
-                SELECT @idRegistro = id_registro 
-                FROM Registro_Diario 
-                WHERE id_cliente = @idCliente AND Fecha = @fecha AND Tiempo = @tiempo;
-
-                -- 2. Si no existe, la creamos
-                IF (@idRegistro IS NULL)
-                BEGIN
-                    INSERT INTO Registro_Diario (id_cliente, Fecha, Tiempo)
-                    VALUES (@idCliente, @fecha, @tiempo);
-                    SET @idRegistro = SCOPE_IDENTITY();
-                END
-
-                -- 3. actualizar la cantidad del producto si ya existe en el registro
-                UPDATE RegistroxProducto
-                SET Cantidad = Cantidad + @cantidad
-                WHERE id_registro = @idRegistro AND id_producto = @idProducto;
-
-                -- 4. @@ROWCOUNT: filas se actualizadas. 
-                -- Si es 0, significa que el producto NO estaba en la tabla, entonces lo insertamos.
-                IF (@@ROWCOUNT = 0)
-                BEGIN
-                    INSERT INTO RegistroxProducto (id_registro, id_producto, Cantidad)
-                    VALUES (@idRegistro, @idProducto, @cantidad);
-                END";
-
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@idCliente", consumo.Id_cliente);
-            command.Parameters.AddWithValue("@fecha", consumo.Fecha.Date);
-            command.Parameters.AddWithValue("@tiempo", consumo.Tiempo.Trim().ToLower());
-            command.Parameters.AddWithValue("@idProducto", consumo.Id_producto);
-            command.Parameters.AddWithValue("@cantidad", consumo.Cantidad);
+                Direction = ParameterDirection.Output
+            };
+            command.Parameters.Add(outputParam);
 
             await command.ExecuteNonQueryAsync();
+
+            return (int)outputParam.Value;
         }
+
+        public async Task<Cliente?> ObtenerCliente(int id)
+        {
+            var usuario = await _context.Usuario
+                .FirstOrDefaultAsync(u => u.Id_usuario == id);
+
+            if (usuario == null) return null;
+
+            var cliente = await _context.Cliente
+                .FirstOrDefaultAsync(c => c.Id_usuario == id);
+
+            if (cliente == null) return null;
+
+            cliente.Correo = usuario.Correo;
+            cliente.Nombre = usuario.Nombre;
+            cliente.Ap1 = usuario.Ap1;
+            cliente.Ap2 = usuario.Ap2;
+            cliente.Fecha_nacimiento = usuario.Fecha_nacimiento;
+            cliente.Peso = usuario.Peso;
+            cliente.Altura = usuario.Altura;
+
+            return cliente;
+        }
+
+        public Task ActualizarCliente(Cliente cliente) => throw new NotImplementedException();
+
+        public async Task<List<ComidaConsumidaDTO>> ObtenerConsumo(int idCliente, DateTime fecha)
+        {
+            return await _context.Registro_Diario
+                .Where(rd => rd.Id_cliente == idCliente && rd.Fecha == fecha.Date)
+                .Join(_context.RegistroxProducto,
+                    rd => rd.Id_registro,
+                    rp => rp.Id_registro,
+                    (rd, rp) => new { rd, rp })
+                .Join(_context.Producto,
+                    x => x.rp.Id_producto,
+                    p => p.Id_producto,
+                    (x, p) => new ComidaConsumidaDTO
+                    {
+                        Tiempo = x.rd.Tiempo,
+                        Producto = p.Descripcion,
+                        Cantidad = x.rp.Cantidad,
+                        Calorias = p.Energia * x.rp.Cantidad
+                    })
+                .ToListAsync();
+        }
+
+        public async Task RegistrarComida(RegistroComidaDTO consumo)
+        {
+            var fecha = consumo.Fecha.Date;
+            var tiempo = consumo.Tiempo.Trim().ToLower();
+
+            var registro = await _context.Registro_Diario
+                .FirstOrDefaultAsync(rd =>
+                    rd.Id_cliente == consumo.Id_cliente &&
+                    rd.Fecha == fecha &&
+                    rd.Tiempo == tiempo);
+
+            if (registro == null)
+            {
+                registro = new RegistroDiario
+                {
+                    Id_cliente = consumo.Id_cliente,
+                    Fecha = fecha,
+                    Tiempo = tiempo
+                };
+                _context.Registro_Diario.Add(registro);
+                await _context.SaveChangesAsync();
+            }
+
+            var registroxProducto = await _context.RegistroxProducto
+                .FirstOrDefaultAsync(rp =>
+                    rp.Id_registro == registro.Id_registro &&
+                    rp.Id_producto == consumo.Id_producto);
+
+            if (registroxProducto != null)
+            {
+                registroxProducto.Cantidad += consumo.Cantidad;
+            }
+            else
+            {
+                _context.RegistroxProducto.Add(new RegistroxProducto
+                {
+                    Id_registro = registro.Id_registro,
+                    Id_producto = consumo.Id_producto,
+                    Cantidad = consumo.Cantidad
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<(bool Excedido, string MensajeAlerta)> ExcesoCalorico(int idCliente, DateTime fecha)
+        {
+            var connection = _context.Database.GetDbConnection();
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "sp_ExcesoCalorico";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@idCliente", idCliente));
+            command.Parameters.Add(new SqlParameter("@fecha", fecha.Date));
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (reader.HasRows && await reader.ReadAsync())
+                return (true, reader.GetString(0));
+
+            return (false, string.Empty);
+        }
+
+        public Task<bool> MedidaExiste(int id_cliente, DateTime fecha) => throw new NotImplementedException();
+        public Task<List<MedidaVariacionDTO>> ObtenerReporteAvance(int id_cliente, DateTime fecha_inicio, DateTime fecha_fin) => throw new NotImplementedException();
 
         // ============================================================
         // METODOS DE MONGODB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)

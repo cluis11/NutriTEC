@@ -60,9 +60,73 @@ namespace NutriTEC.API.Services
         }
 
 
-        public Task AgregarProducto(int id_receta, ProductoxReceta producto) => throw new NotImplementedException();
-        public Task EliminarProductoDeReceta(int id_receta, int id_producto) => throw new NotImplementedException();
-        public Task ActualizarNombreReceta(int id, string nombre) => throw new NotImplementedException();
-        public Task EliminarReceta(int id) => throw new NotImplementedException();
+        public async Task AgregarProducto(int id_receta, ProductoxReceta producto)
+        {
+            if (id_receta <= 0)
+                throw new ArgumentException("El id de la receta es inválido.");
+
+            if (producto == null)
+                throw new ArgumentException("El producto es obligatorio.");
+
+            if (producto.Id_producto <= 0)
+                throw new ArgumentException("El producto es inválido.");
+
+            if (producto.Cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor a cero.");
+
+            var receta = await _recetaRepository.ObtenerReceta(id_receta);
+
+            if (receta == null)
+                throw new KeyNotFoundException("Receta no encontrada.");
+
+            var productoBase = await _productoRepository.ObtenerProducto(producto.Id_producto);
+
+            if (productoBase == null)
+                throw new ArgumentException("El producto no existe.");
+
+            if (productoBase.Estado.ToLower() != "aprobado")
+                throw new ArgumentException("Solo se pueden agregar productos aprobados.");
+
+            await _recetaRepository.AgregarProducto(id_receta, producto);
+        }
+        public async Task EliminarProductoDeReceta(int id_receta, int id_producto)
+        {
+            if (id_receta <= 0 || id_producto <= 0)
+                throw new ArgumentException("Datos inválidos.");
+
+            var receta = await _recetaRepository.ObtenerReceta(id_receta);
+
+            if (receta == null)
+                throw new KeyNotFoundException("Receta no encontrada.");
+
+            await _recetaRepository.EliminarProductoDeReceta(id_receta, id_producto);
+        }
+        public async Task ActualizarNombreReceta(int id, string nombre)
+        {
+            if (id <= 0)
+                throw new ArgumentException("El id de la receta es inválido.");
+
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre de la receta es obligatorio.");
+
+            var receta = await _recetaRepository.ObtenerReceta(id);
+
+            if (receta == null)
+                throw new KeyNotFoundException("Receta no encontrada.");
+
+            await _recetaRepository.ActualizarNombreReceta(id, nombre);
+        }
+        public async Task EliminarReceta(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException("El id de la receta es inválido.");
+
+            var receta = await _recetaRepository.ObtenerReceta(id);
+
+            if (receta == null)
+                throw new KeyNotFoundException("Receta no encontrada.");
+
+            await _recetaRepository.EliminarReceta(id);
+        }
     }
 }

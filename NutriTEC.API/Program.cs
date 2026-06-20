@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using NutriTEC.API.Data.Connection;
+using NutriTEC.API.Data;
 using NutriTEC.API.Data.Repositories;
 using NutriTEC.API.Services;
 
@@ -11,7 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 // SERVICIOS
 // ============================================================
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new NutriTEC.API.DateTimeJsonConverter());
+    });
 
 // CORS
 builder.Services.AddCors(options =>
@@ -42,12 +51,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ============================================================
+// ENTITY FRAMEWORK
+// ============================================================
+
+builder.Services.AddDbContext<NutriTECContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Mongo
+builder.Services.AddSingleton<MongoDatabaseConnection>();
+
+// ============================================================
 // INYECCION DE DEPENDENCIAS
 // ============================================================
 
-// Connection
-builder.Services.AddSingleton<DatabaseConnection>();
-builder.Services.AddSingleton<MongoDatabaseConnection>();
 
 // Repositories
 builder.Services.AddScoped<AuthRepository>();
@@ -68,6 +84,7 @@ builder.Services.AddScoped<PlanService>();
 builder.Services.AddScoped<RecetaService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<MedidaService>();
+
 // ============================================================
 // PIPELINE
 // ============================================================
