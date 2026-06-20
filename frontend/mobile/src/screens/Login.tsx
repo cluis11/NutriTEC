@@ -6,18 +6,76 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView, 
   Platform, 
-  ScrollView 
+  ScrollView,
+  Alert 
 } from 'react-native';
 import { styles } from './LoginStyle';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../App';
 
-export default function LoginScreen() {
-  // Estados para almacenar las credenciales
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+
+interface Props {
+  navigation: LoginScreenNavigationProp;
+}
+
+export default function LoginScreen({ navigation }: Props) { 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // TODO: Conectar a la api
-    console.log('Intentando iniciar sesión con:', { email, password });
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Campos vacíos', 'Por favor, llena todos los campos.');
+      return;
+    }
+    
+    let loginExitoso = false; 
+
+    try {
+      const API_URL = 'http://192.168.124.7:5108/api/auth/login'; //CAMBIO DE IP POR RED
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Correo: email,         
+          Contrasena: password   
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert('Error de inicio de sesión', errorData.mensaje || 'Credenciales incorrectas.');
+        return; 
+      }
+
+      const data = await response.json();
+      console.log('¡Login exitoso en la app! Datos del usuario:', data);
+      
+      loginExitoso = true; 
+
+      Alert.alert(
+        '¡Bienvenido!', 
+        `Hola de nuevo, ${data.nombre} ${data.ap1}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.replace('Dashboard'); // Cambia de pantalla
+            }
+          }
+        ],
+        { cancelable: false }
+      );
+
+    } catch (error) { 
+      console.log('Intento de conexión:', error);
+      if (!loginExitoso) {
+        Alert.alert('Error de red', 'No se pudo establecer conexión con el servidor de NutriTEC.');
+      }
+    } 
   };
 
   return (
@@ -43,7 +101,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail} // Actualiza el estado del email
+            onChangeText={setEmail} 
           />
 
           <Text style={styles.label}>Contraseña</Text>
@@ -54,7 +112,7 @@ export default function LoginScreen() {
             secureTextEntry={true} 
             autoCapitalize="none"
             value={password}
-            onChangeText={setPassword} // Actualiza el estado de la contraseña
+            onChangeText={setPassword} 
           />
 
           {/* Botón de Ingresar */}
