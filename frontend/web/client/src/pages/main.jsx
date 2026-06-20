@@ -10,6 +10,7 @@ import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
 import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
+import Retroalimentacion from './retroalimentacion';
 
 const ClientMain = () => {
   const navigate = useNavigate();
@@ -276,6 +277,13 @@ const handleRegistrarComida = async (e) => {
                   <span>Reporte de Avance</span>
                 </button>
 
+                <button
+                  className={`list-group-item list-group-item-action border-0 px-2 small py-2 text-start rounded-2 w-auto w-lg-100 ${vistaActiva === 'retroalimentacion' ? 'active' : ''}`}
+                  onClick={() => setVistaActiva('retroalimentacion')}
+                >
+                  Seguimiento Nutricionista
+                </button>
+
               </div>
             </div>
           </div>
@@ -455,6 +463,7 @@ const handleRegistrarComida = async (e) => {
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
             {vistaActiva === 'recetas' && <GestionRecetas />}
+            {vistaActiva === 'retroalimentacion' && <Retroalimentacion />}
           </div>
         )}
 

@@ -48,7 +48,7 @@ const NutricionistaDashboard = () => {
       try {
         setCargando(true);
         // Cargar Pacientes Asociados
-        const resPacientes = await fetch(`${API_BASE_URL}/plan/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
+        const resPacientes = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
         if (resPacientes.ok) setPacientes(await resPacientes.json());
 
         // Cargar Planes del Nutricionista
@@ -71,7 +71,7 @@ const NutricionistaDashboard = () => {
         return;
       }
       try {
-        const res = await fetch(`${API_BASE_URL}/plan/cliente/${pacienteSeleccionado}/asignaciones`);
+        const res = await fetch(`${API_BASE_URL}/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
         if (res.ok) {
           const datosAsignaciones = await res.json();
           setAsignacionesBackend(datosAsignaciones);
@@ -116,7 +116,7 @@ const NutricionistaDashboard = () => {
         setPlanSeleccionado("");
 
         // Refrescar la agenda con la nueva ruta limpia
-        const resAgenda = await fetch(`${API_BASE_URL}/plan/cliente/${pacienteSeleccionado}/asignaciones`);
+        const resAgenda = await fetch(`${API_BASE_URL}/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
         if (resAgenda.ok) setAsignacionesBackend(await resAgenda.json());
 
       } else {

@@ -62,26 +62,6 @@ namespace NutriTEC.API.Services
             await _planRepository.EliminarPlan(id);
         }
 
-        public Task<List<PacienteActivoDTO>> ObtenerClientesActivos(int id_nutricionista)
-        {
-            return _planRepository.ObtenerPacientes(id_nutricionista);
-        }
-
-        public Task<List<ClienteDisponibleDTO>> ObtenerClientesDisponibles()
-        {
-            return _planRepository.ObtenerClientes();
-        }
-
-        public Task AsignarCliente(int id_nutricionista, int id_cliente)
-        {
-            return _planRepository.AsignarCliente(id_nutricionista, id_cliente);
-        }
-
-        public Task<List<AsignarPlanDTO>> ObtenerAsignacionesCliente(int id_cliente)
-        {
-            return _planRepository.ObtenerAsignacionesCliente(id_cliente);
-        }
-
         public async Task AsignarPlan(AsignarPlanDTO asignacion)
         {
             if (asignacion.Fecha_inicio >= asignacion.Fecha_fin)

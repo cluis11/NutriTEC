@@ -47,6 +47,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Connection
 builder.Services.AddSingleton<DatabaseConnection>();
+builder.Services.AddSingleton<MongoDatabaseConnection>();
 
 // Repositories
 builder.Services.AddScoped<AuthRepository>();

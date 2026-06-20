@@ -52,7 +52,7 @@ const GestionPlan = () => {
   const cargarProductos = async () => {
     try {
       setCargandoProductos(true);
-      const res = await fetch(`${API_BASE_URL}/producto`);
+      const res = await fetch(`${API_BASE_URL}/producto/aprobados`);
       if (!res.ok) throw new Error("No se pudo cargar el catálogo de productos.");
       const datos = await res.json();
       setProductosCatalogo(datos);

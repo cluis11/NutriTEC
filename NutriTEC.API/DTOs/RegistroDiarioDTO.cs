@@ -32,4 +32,11 @@
             public string Tiempo { get; set; } = string.Empty;
             public List<Producto> Productos { get; set; } = new();
         }
+
+        public class FechaConRegistroDTO
+        {
+            public DateTime Fecha { get; set; }
+            public int Cantidad_tiempos { get; set; }
+            public decimal Total_dia { get; set; }
+        }
     }

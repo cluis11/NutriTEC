@@ -200,6 +200,7 @@ CREATE TABLE RegistroxProducto (
 -- ============================================================
 -- SP MAX DE CALORIAS
 -- ============================================================
+GO
 CREATE PROCEDURE sp_ExcesoCalorico
     @idCliente INT,
     @fecha DATE

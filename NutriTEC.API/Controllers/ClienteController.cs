@@ -75,5 +75,45 @@ namespace NutriTEC.API.Controllers
 
         [HttpPost("{id}/registro/receta")]
         public Task<IActionResult> RegistrarDesdeReceta(int id, [FromBody] object request) => throw new NotImplementedException();
+
+        // ============================================================
+        // ENDPOINTS DE MONGO DB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)
+        // ============================================================
+
+        [HttpGet("{id}/retroalimentacion")]
+        public async Task<IActionResult> ObtenerForoPropio(int id)
+        {
+            try
+            {
+                var foros = await _clienteService.ObtenerForoPropio(id);
+                return Ok(foros);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/retroalimentacion/responder/{idForo}")]
+        public async Task<IActionResult> ResponderForo(int id, string idForo, [FromBody] RespuestaForo nuevaRespuesta)
+        {
+            try
+            {
+                await _clienteService.ResponderForo(id, idForo, nuevaRespuesta);
+                return Ok(new { mensaje = "Respuesta añadida al foro correctamente." });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { mensaje = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
     }
 }
