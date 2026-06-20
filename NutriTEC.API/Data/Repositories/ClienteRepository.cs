@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using NutriTEC.API.Data;
+using NutriTEC.API.Data.Connection;
 using NutriTEC.API.Models;
 using NutriTEC.API.DTOs;
 using MongoDB.Driver;

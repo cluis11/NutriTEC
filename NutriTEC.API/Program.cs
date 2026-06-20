@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using NutriTEC.API.Data;
+using NutriTEC.API.Data.Connection;
 using NutriTEC.API.Data.Repositories;
 using NutriTEC.API.Services;
 
