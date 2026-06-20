@@ -1,56 +1,50 @@
-using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
-using NutriTEC.API.Data.Connection;
+using NutriTEC.API.Data;
 using NutriTEC.API.Models;
 using NutriTEC.API.DTOs;
+using Microsoft.Data.SqlClient;
 
 namespace NutriTEC.API.Data.Repositories
 {
     public class NutricionistaRepository
     {
-        private readonly DatabaseConnection _db;
+        private readonly NutriTECContext _context;
 
-        public NutricionistaRepository(DatabaseConnection db)
+        public NutricionistaRepository(NutriTECContext context)
         {
-            _db = db;
+            _context = context;
         }
 
         public async Task<bool> CorreoExiste(string correo)
         {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
-
-            var query = "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo";
-
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@correo", correo);
-
-            var count = (int)await command.ExecuteScalarAsync();
-            return count > 0;
+            return await _context.Usuario
+                .AnyAsync(u => u.Correo == correo);
         }
 
         public async Task<int> CrearNutricionista(Nutricionista nutricionista)
         {
-            using var connection = _db.GetConnection();
+            var connection = _context.Database.GetDbConnection();
             await connection.OpenAsync();
 
-            using var command = new SqlCommand("SP_RegistrarNutricionista", connection);
+            using var command = connection.CreateCommand();
+            command.CommandText = "SP_RegistrarNutricionista";
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.AddWithValue("@Correo", nutricionista.Correo);
-            command.Parameters.AddWithValue("@Contrasena", nutricionista.Contrasena);
-            command.Parameters.AddWithValue("@Nombre", nutricionista.Nombre);
-            command.Parameters.AddWithValue("@Ap1", nutricionista.Ap1);
-            command.Parameters.AddWithValue("@Ap2", (object?)nutricionista.Ap2 ?? DBNull.Value);
-            command.Parameters.AddWithValue("@Fecha_nacimiento", nutricionista.Fecha_nacimiento);
-            command.Parameters.AddWithValue("@Peso", nutricionista.Peso);
-            command.Parameters.AddWithValue("@Altura", nutricionista.Altura);
-            command.Parameters.AddWithValue("@Cedula", nutricionista.Cedula);
-            command.Parameters.AddWithValue("@Codigo", nutricionista.Codigo);
-            command.Parameters.AddWithValue("@Cobro", nutricionista.Cobro);
-            command.Parameters.AddWithValue("@Tarjeta", nutricionista.Tarjeta);
-            command.Parameters.AddWithValue("@Foto", (object?)nutricionista.Foto ?? DBNull.Value);
-            command.Parameters.AddWithValue("@Direccion", nutricionista.Direccion);
+            command.Parameters.Add(new SqlParameter("@Correo", nutricionista.Correo));
+            command.Parameters.Add(new SqlParameter("@Contrasena", nutricionista.Contrasena));
+            command.Parameters.Add(new SqlParameter("@Nombre", nutricionista.Nombre));
+            command.Parameters.Add(new SqlParameter("@Ap1", nutricionista.Ap1));
+            command.Parameters.Add(new SqlParameter("@Ap2", (object?)nutricionista.Ap2 ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Fecha_nacimiento", nutricionista.Fecha_nacimiento));
+            command.Parameters.Add(new SqlParameter("@Peso", nutricionista.Peso));
+            command.Parameters.Add(new SqlParameter("@Altura", nutricionista.Altura));
+            command.Parameters.Add(new SqlParameter("@Cedula", nutricionista.Cedula));
+            command.Parameters.Add(new SqlParameter("@Codigo", nutricionista.Codigo));
+            command.Parameters.Add(new SqlParameter("@Cobro", nutricionista.Cobro));
+            command.Parameters.Add(new SqlParameter("@Tarjeta", nutricionista.Tarjeta));
+            command.Parameters.Add(new SqlParameter("@Foto", (object?)nutricionista.Foto ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Direccion", nutricionista.Direccion));
 
             var outputParam = new SqlParameter("@id_usuario", SqlDbType.Int)
             {
@@ -65,43 +59,27 @@ namespace NutriTEC.API.Data.Repositories
 
         public async Task<Nutricionista?> ObtenerNutricionista(int id)
         {
-            using var connection = _db.GetConnection();
-            await connection.OpenAsync();
+            var usuario = await _context.Usuario
+                .FirstOrDefaultAsync(u => u.Id_usuario == id);
 
-            var query = @"SELECT u.id_usuario, u.Correo, u.Nombre, u.Ap1, u.Ap2, u.Fecha_nacimiento, u.Peso, u.Altura,
-                                 n.Cedula, n.Codigo, n.Cobro, n.Tarjeta, n.Foto, n.Direccion
-                          FROM Usuario u
-                          INNER JOIN Nutricionista n ON u.id_usuario = n.id_usuario
-                          WHERE u.id_usuario = @id";
+            if (usuario == null) return null;
 
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@id", id);
+            var nutri = await _context.Nutricionista
+                .FirstOrDefaultAsync(n => n.Id_usuario == id);
 
-            using var reader = await command.ExecuteReaderAsync();
+            if (nutri == null) return null;
 
-            if (await reader.ReadAsync())
-            {
-                return new Nutricionista
-                {
-                    Id_usuario = reader.GetInt32(0),
-                    Correo = reader.GetString(1),
-                    Nombre = reader.GetString(2),
-                    Ap1 = reader.GetString(3),
-                    Ap2 = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    Fecha_nacimiento = reader.GetDateTime(5),
-                    Peso = reader.GetDecimal(6),
-                    Altura = reader.GetDecimal(7),
-                    Cedula = reader.GetString(8),
-                    Codigo = reader.GetString(9),
-                    Cobro = reader.GetString(10),
-                    Tarjeta = reader.GetString(11),
-                    Foto = reader.IsDBNull(12) ? null : reader.GetString(12),
-                    Direccion = reader.GetString(13)
-                };
-            }
+            nutri.Correo = usuario.Correo;
+            nutri.Nombre = usuario.Nombre;
+            nutri.Ap1 = usuario.Ap1;
+            nutri.Ap2 = usuario.Ap2;
+            nutri.Fecha_nacimiento = usuario.Fecha_nacimiento;
+            nutri.Peso = usuario.Peso;
+            nutri.Altura = usuario.Altura;
 
-            return null;
+            return nutri;
         }
+
         public Task ActualizarNutricionista(Nutricionista nutricionista) => throw new NotImplementedException();
         public Task<List<Cliente>> ObtenerPacientes(int id_nutricionista) => throw new NotImplementedException();
         public Task<List<ClienteDisponibleDTO>> ObtenerPacientesDisponibles() => throw new NotImplementedException();
