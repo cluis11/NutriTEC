@@ -20,7 +20,7 @@ const MedidasPersonales = () => {
 
   const cargarMedidas = async () => {
     try {
-      const response = await fetch(`http://localhost:5108/api/medida/usuario/${idUsuario}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/medida/usuario/${idUsuario}`);
       if (response.ok) {
         const data = await response.json();
         setMedidas(data);
@@ -55,7 +55,7 @@ const MedidasPersonales = () => {
         p_grasa: parseFloat(form.p_grasa) || 0.0
       };
 
-      const response = await fetch("http://localhost:5108/api/medida", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/medida`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datosFormateados)

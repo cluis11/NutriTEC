@@ -24,7 +24,7 @@ function Productos() {
   const eliminarProducto = async (id) => {
     if (!window.confirm("¿Seguro que desea eliminar este producto?")) return;
     try {
-      const response = await fetch(`http://localhost:5108/api/producto/${id}`, { method: "DELETE" });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al eliminar producto");
       alert("Producto eliminado correctamente.");
       obtenerProductos();
@@ -34,7 +34,7 @@ function Productos() {
   const obtenerProductos = async () => {
     try {
       setError(""); setCargando(true);
-      const response = await fetch("http://localhost:5108/api/producto");
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto`);
       if (!response.ok) throw new Error("Error al obtener productos");
       setProductos(await response.json());
     } catch (err) { setError(err.message); }
@@ -46,7 +46,7 @@ function Productos() {
     if (!idBusqueda.trim()) { setMensajeBusqueda("Debe ingresar un ID."); setProductoEncontrado(null); return; }
     try {
       setMensajeBusqueda(""); setProductoEncontrado(null);
-      const response = await fetch(`http://localhost:5108/api/producto/${idBusqueda}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto/${idBusqueda}`);
       if (response.status === 404) { setMensajeBusqueda("Producto no encontrado."); return; }
       if (!response.ok) throw new Error("Error al buscar producto.");
       setProductoEncontrado(await response.json());
@@ -72,7 +72,7 @@ function Productos() {
         estado: "pendiente",
         vitaminas: vitaminas.map(v => v.nombre).filter(v => v.trim() !== "")
       };
-      const response = await fetch("http://localhost:5108/api/producto", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productoParaEnviar)
       });
@@ -87,7 +87,7 @@ function Productos() {
   const actualizarProducto = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5108/api/producto/${productoEditando.id_producto}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto/${productoEditando.id_producto}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...productoEditando, tamano: Number(productoEditando.tamano), porcion: Number(productoEditando.porcion), energia: Number(productoEditando.energia), grasa: Number(productoEditando.grasa), sodio: Number(productoEditando.sodio), carbohidratos: Number(productoEditando.carbohidratos), proteina: Number(productoEditando.proteina), calcio: Number(productoEditando.calcio), hierro: Number(productoEditando.hierro) })
       });
