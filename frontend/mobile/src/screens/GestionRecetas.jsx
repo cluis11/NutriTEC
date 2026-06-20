@@ -11,7 +11,7 @@ import {
 
 const API_BASE_URL = "http://localhost:5108";
 
-function GestionRecetas() {
+function GestionRecetas({ navigation }) {
   const [idCliente, setIdCliente] = useState("4");
   const [nombreReceta, setNombreReceta] = useState("");
 
@@ -22,9 +22,6 @@ function GestionRecetas() {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [cantidad, setCantidad] = useState("1");
   const [productosReceta, setProductosReceta] = useState([]);
-
-  const [recetaEditando, setRecetaEditando] = useState(null);
-  const [nuevoNombreReceta, setNuevoNombreReceta] = useState("");
 
   useEffect(() => {
     cargarProductosAprobados();
@@ -44,8 +41,6 @@ function GestionRecetas() {
       Alert.alert("Error", "No se pudieron cargar los productos aprobados.");
     }
   };
-
-  
 
   const buscarRecetasPorCliente = async () => {
     if (!idCliente.trim()) {
@@ -192,6 +187,13 @@ function GestionRecetas() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Gestión de Recetas</Text>
+
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>← Volver</Text>
+      </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Buscar recetas por cliente</Text>
@@ -457,7 +459,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 6,
     color: "#16A085"
-  }
+  },
+  backButton: {
+    backgroundColor: "#7F8C8D",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignSelf: "flex-start"
+  },
+
+  backButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16
+  },
 });
 
 export default GestionRecetas;

@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }: Props) {
     let loginExitoso = false; 
 
     try {
-      const API_URL = 'http://192.168.124.7:5108/api/auth/login'; //CAMBIO DE IP POR RED
+      const API_URL = 'http://localhost:5108/api/auth/login'; //CAMBIO DE IP POR RED
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -52,18 +52,21 @@ export default function LoginScreen({ navigation }: Props) {
       }
 
       const data = await response.json();
-      console.log('¡Login exitoso en la app! Datos del usuario:', data);
       
       loginExitoso = true; 
 
+      const idUsuario = data.id_usuario; 
+
       Alert.alert(
-        '¡Bienvenido!', 
+        '¡Bienvenido!',
         `Hola de nuevo, ${data.nombre} ${data.ap1}`,
         [
           {
             text: 'OK',
             onPress: () => {
-              navigation.replace('Dashboard'); // Cambia de pantalla
+              navigation.replace('Dashboard', { 
+                usuario: idUsuario
+              }); 
             }
           }
         ],

@@ -10,7 +10,7 @@ import GestionRecetas from "./src/screens/GestionRecetas";
 
 export type RootStackParamList = {
   Login: undefined;
-  Dashboard: undefined;
+  Dashboard: { usuario: number } | undefined;
   GestionRecetas: undefined;
 };
 
@@ -20,7 +20,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="GestionRecetas"
+        initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
