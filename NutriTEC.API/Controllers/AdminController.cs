@@ -15,9 +15,35 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpGet("reporte-cobro")]
-        public Task<IActionResult> ObtenerReporteCobro() => throw new NotImplementedException();
+        public async Task<IActionResult> ObtenerReporteCobro()
+        {
+            try
+            {
+                var reporte = await _adminService.ObtenerReporteCobro();
+                return Ok(reporte);
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al obtener el reporte de cobro" });
+            }
+        }
 
         [HttpPut("producto/{id}/aprobar")]
-        public Task<IActionResult> AprobarProducto(int id) => throw new NotImplementedException();
+        public async Task<IActionResult> AprobarProducto(int id)
+        {
+            try
+            {
+                await _adminService.AprobarProducto(id);
+                return Ok(new { mensaje = "Producto aprobado correctamente" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al aprobar el producto" });
+            }
+        }
     }
 }

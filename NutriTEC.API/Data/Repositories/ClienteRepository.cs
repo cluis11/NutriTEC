@@ -80,7 +80,41 @@ namespace NutriTEC.API.Data.Repositories
             return cliente;
         }
 
-        public Task ActualizarCliente(Cliente cliente) => throw new NotImplementedException();
+        public async Task ActualizarCliente(Cliente cliente)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var usuario = await _context.Usuario
+                    .FirstOrDefaultAsync(u => u.Id_usuario == cliente.Id_usuario);
+
+                if (usuario != null)
+                {
+                    usuario.Correo = cliente.Correo;
+                    usuario.Contrasena = cliente.Contrasena;
+                    usuario.Peso = cliente.Peso;
+                    usuario.Altura = cliente.Altura;
+                }
+
+                var cli = await _context.Cliente
+                    .FirstOrDefaultAsync(c => c.Id_usuario == cliente.Id_usuario);
+
+                if (cli != null)
+                {
+                    cli.Pais = cliente.Pais;
+                    cli.Consumo_maximo = cliente.Consumo_maximo;
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
         public async Task<List<ComidaConsumidaDTO>> ObtenerConsumo(int idCliente, DateTime fecha)
         {

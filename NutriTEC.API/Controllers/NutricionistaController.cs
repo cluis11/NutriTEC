@@ -52,7 +52,26 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public Task<IActionResult> ActualizarPerfil(int id, [FromBody] Nutricionista nutricionista) => throw new NotImplementedException();
+        public async Task<IActionResult> ActualizarPerfil(int id, [FromBody] Nutricionista nutricionista)
+        {
+            try
+            {
+                await _nutricionistaService.ActualizarPerfil(id, nutricionista);
+                return Ok(new { mensaje = "Perfil actualizado correctamente" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al actualizar el perfil" });
+            }
+        }
 
         [HttpGet("{id}/clientes")]
         public async Task<IActionResult> ObtenerClientesActivos(int id)
