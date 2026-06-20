@@ -249,8 +249,7 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ECEFF1' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}> (ID: {idClienteLogueado})</Text>
-            
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}></Text>
             <TouchableOpacity 
               style={{ backgroundColor: '#F39C12', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
               onPress={() => navigation.navigate('RecetasCliente', { idCliente: idClienteLogueado })}
