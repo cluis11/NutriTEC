@@ -31,7 +31,7 @@ const ClientMain = () => {
   useEffect(() => {
     const cargarProductosAPI = async () => {
       try {
-        const response = await fetch('http://localhost:5108/api/producto');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto`);
         if (response.ok) {
           const datos = await response.json();
           setListaAlimentos(datos);
@@ -59,7 +59,7 @@ const ClientMain = () => {
       };
 
       const promesasSemanales = diasSemanaActual.map(dia =>
-        fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro?fecha=${formatearFechaISO(dia)}`)
+        fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro?fecha=${formatearFechaISO(dia)}`)
           .then(res => res.ok ? res.json() : null)
           .catch(() => null)
       );
@@ -161,7 +161,7 @@ const ClientMain = () => {
         id_producto: alimentoSeleccionado.id_producto,
         cantidad: parseFloat(porcionComida)
       };
-      const response = await fetch(`http://localhost:5108/api/cliente/${idClienteLogueado}/registro`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
