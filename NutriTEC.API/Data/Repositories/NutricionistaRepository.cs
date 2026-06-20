@@ -80,7 +80,44 @@ namespace NutriTEC.API.Data.Repositories
             return nutri;
         }
 
-        public Task ActualizarNutricionista(Nutricionista nutricionista) => throw new NotImplementedException();
+        public async Task ActualizarNutricionista(Nutricionista nutricionista)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var usuario = await _context.Usuario
+                    .FirstOrDefaultAsync(u => u.Id_usuario == nutricionista.Id_usuario);
+
+                if (usuario != null)
+                {
+                    usuario.Correo = nutricionista.Correo;
+                    usuario.Contrasena = nutricionista.Contrasena;
+                    usuario.Peso = nutricionista.Peso;
+                    usuario.Altura = nutricionista.Altura;
+                }
+
+                var nutri = await _context.Nutricionista
+                    .FirstOrDefaultAsync(n => n.Id_usuario == nutricionista.Id_usuario);
+
+                if (nutri != null)
+                {
+                    nutri.Cobro = nutricionista.Cobro;
+                    nutri.Tarjeta = nutricionista.Tarjeta;
+                    nutri.Direccion = nutricionista.Direccion;
+                    nutri.Foto = nutricionista.Foto;
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
         public Task<List<Cliente>> ObtenerPacientes(int id_nutricionista) => throw new NotImplementedException();
         public Task<List<ClienteDisponibleDTO>> ObtenerPacientesDisponibles() => throw new NotImplementedException();
         public Task AsociarPaciente(int id_nutricionista, int id_cliente) => throw new NotImplementedException();
