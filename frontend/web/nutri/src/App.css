@@ -1,0 +1,143 @@
+/* General */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8fafc; 
+  color: #334155;
+}
+
+/* Layout */
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* SideBar */
+.sidebar {
+  width: 260px;
+  background: #1e293b; 
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.sidebar-header {
+  text-align: center;
+  padding-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.sidebar-header h2 strong {
+  color: #10b981;
+}
+
+/* Nav */
+.nav-menu {
+  padding: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: 0.3s ease;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, #10b981 0%, #1e293b 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+.nav-item span {
+  margin-left: 15px;
+  font-weight: 500;
+}
+
+.logout {
+  margin-top: auto;
+  color: #f87171;
+}
+.logout:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fff;
+}
+
+/* Contenido Principal */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px;
+  background-color: #f8fafc;
+  background-image: radial-gradient(
+    circle at top right,
+    rgba(16, 185, 129, 0.03),
+    transparent 45%
+  );
+}
+
+/* Dashboard Header */
+.header-title h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #1e293b;
+}
+
+.header-title p {
+  color: #64748b;
+}
+
+/* Tarjetas del Dashboard */
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 25px;
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: #10b981;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.06);
+}
+
+.card h3 {
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.card p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
