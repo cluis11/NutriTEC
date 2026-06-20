@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { styles } from './ClientStyles';
 
-const API_BASE_URL = "http://localhost:5108";
 
+const API_BASE_URL = "http://localhost:5108"; 
 
 interface Comida {
   fecha: string;
@@ -32,26 +32,17 @@ interface Producto {
 }
 
 interface Props {
-  navigation: any;
-  route: any;
+  navigation: any; 
+  route: any; 
 }
 
 export default function ClientDashboardScreen({ navigation, route }: Props) {
-  
-  const [idClienteLogueado, setIdClienteLogueado] = useState<number>(
-    route.params?.idCliente || 4
-  );
-
-  useEffect(() => {
-    if (route.params?.idCliente) {
-      setIdClienteLogueado(route.params.idCliente);
-    }
-  }, [route.params?.idCliente]);
+  const idClienteLogueado = route.params?.usuario || route.params?.id_usuario || route.params?.idCliente || route.params?.id || 4; 
+  console.log('ID Cliente Logueado actual:', idClienteLogueado, '| route.params:', route.params);
 
   const [comidasAsignadas, setComidasAsignadas] = useState<Comida[]>([]);
   const [fechaPivote, setFechaPivote] = useState<Date>(new Date());
   
-
   const [fechaSeleccionadaStr, setFechaSeleccionadaStr] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -60,20 +51,27 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
 
 
-  const [nuevoTiempo, setNuevoTiempo] = useState<string>('Almuerzo');
+  const [nuevoTiempo, setNuevoTiempo] = useState<string>('almuerzo');
   const [porcionComida, setPorcionComida] = useState<string>('1');
 
-
+  
   const [listaProductos, setListaProductos] = useState<Producto[]>([]);
   const [filtroAlimento, setFiltroAlimento] = useState<string>('');
   const [alimentoSeleccionado, setAlimentoSeleccionado] = useState<Producto | null>(null);
+
+  const opcionesTiempos = [
+    { value: 'desayuno', label: 'Desayuno' },
+    { value: 'merienda_manana', label: 'Merienda Mañana' },
+    { value: 'almuerzo', label: 'Almuerzo' },
+    { value: 'merienda_tarde', label: 'Merienda Tarde' },
+    { value: 'cena', label: 'Cena' }
+  ];
 
   const nombresMeses = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
   const diasSemanaLetras = ['L', 'K', 'M', 'J', 'V', 'S', 'D'];
-
 
   const obtenerDiasDeLaSemana = (fechaBase: Date): Date[] => {
     const copia = new Date(fechaBase);
@@ -127,25 +125,27 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
       const listaPlanaFormateada: Comida[] = [];
 
       resultadosSemanales.forEach((data, index) => {
-        if (!data) return;
-        const fechaCeldaLoop = formatearFechaISO(diasDeEstaSemana[index]);
+      if (!data) return;
 
-        if (data.registros) {
-          data.registros.forEach((reg: any) => {
-            if (reg.productos) {
-              reg.productos.forEach((prod: any) => {
-                const fechaRealRegistro = reg.fecha ? reg.fecha.split('T')[0] : fechaCeldaLoop;
-                listaPlanaFormateada.push({
-                  fecha: fechaRealRegistro.trim(),
-                  tiempo: reg.tiempo ? reg.tiempo.toLowerCase().trim() : "desayuno",
-                  detalle: prod.descripcion || prod.nombre,
-                  calorias: prod.energia || 0
-                });
-              });
-            }
+      const fechaCeldaLoop = formatearFechaISO(diasDeEstaSemana[index]);
+
+      if (!data.registros || !Array.isArray(data.registros)) return;
+
+      data.registros.forEach((registro: any) => {
+        const tiempo = registro.tiempo || "desayuno";
+
+        if (!registro.productos || !Array.isArray(registro.productos)) return;
+
+        registro.productos.forEach((producto: any) => {
+          listaPlanaFormateada.push({
+            fecha: data.fecha ? data.fecha.split("T")[0] : fechaCeldaLoop,
+            tiempo: tiempo.replace("_", " ").toLowerCase().trim(),
+            detalle: producto.descripcion || "Alimento",
+            calorias: Number(producto.energia) || 0
           });
-        }
+        });
       });
+    });
 
       setComidasAsignadas(listaPlanaFormateada);
     } catch (error) {
@@ -166,9 +166,11 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
 
     const datosRegistro = {
       id_cliente: idClienteLogueado,
+      idCliente: idClienteLogueado, 
       fecha: fechaSeleccionadaStr,
       tiempo: nuevoTiempo.toLowerCase().trim(),
       id_producto: idProducto,
+      idProducto: idProducto,     
       cantidad: cantidadNumerica
     };
 
@@ -213,7 +215,11 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
   };
 
   useEffect(() => {
-  cargarConsumoDiarioAPI();
+    setComidasAsignadas([]);
+    setCaloriasTotales(0);
+    setFiltroAlimento('');
+    setAlimentoSeleccionado(null);
+    cargarConsumoDiarioAPI();
   }, [fechaPivote, idClienteLogueado]);
 
   useEffect(() => {
@@ -243,26 +249,13 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ECEFF1' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}>{idClienteLogueado} </Text>
-
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#F39C12',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6
-              }}
-              onPress={() => navigation.navigate('GestionRecetas')}
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}> (ID: {idClienteLogueado})</Text>
+            
+            <TouchableOpacity 
+              style={{ backgroundColor: '#F39C12', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
+              onPress={() => navigation.navigate('RecetasCliente', { idCliente: idClienteLogueado })}
             >
-              <Text
-                style={{
-                  color: '#FFF',
-                  fontWeight: 'bold',
-                  fontSize: 11
-                }}
-              >
-                🍳 Recetas
-              </Text>
+              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 11 }}>🍳 Recetas</Text>
             </TouchableOpacity>
           </View>
 
@@ -326,15 +319,23 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
           {/* Form para agregar comida */}
           <View style={{ backgroundColor: '#F8F9F9', padding: 15, borderRadius: 10, marginVertical: 15, borderWidth: 1, borderColor: '#E5E8E8', zIndex: 10 }}>
             <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#34495E', marginBottom: 10 }}>✨ Registrar Alimento</Text>
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              {['Desayuno', 'Merienda Mañana', 'Almuerzo', 'Merienda Tarde', 'Cena'].map((tiempo) => (
+         
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
+              {opcionesTiempos.map((tiempo) => (
                 <TouchableOpacity 
-                  key={tiempo}
-                  onPress={() => setNuevoTiempo(tiempo)}
-                  style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 15, backgroundColor: nuevoTiempo === tiempo ? '#1ABC9C' : '#E5E8E8' }}
+                  key={tiempo.value}
+                  onPress={() => setNuevoTiempo(tiempo.value)}
+                  style={{ 
+                    paddingHorizontal: 12, 
+                    paddingVertical: 7, 
+                    borderRadius: 15, 
+                    backgroundColor: nuevoTiempo === tiempo.value ? '#1ABC9C' : '#E5E8E8',
+                    marginBottom: 2
+                  }}
                 >
-                  <Text style={{ color: nuevoTiempo === tiempo ? '#FFF' : '#7F8C8D', fontSize: 12, fontWeight: 'bold' }}>{tiempo}</Text>
+                  <Text style={{ color: nuevoTiempo === tiempo.value ? '#FFF' : '#7F8C8D', fontSize: 11, fontWeight: 'bold' }}>
+                    {tiempo.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -393,7 +394,7 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
             </View>
           </View>
 
-          {/* Lista de Comidas Registrados*/}
+          {/* Lista de Comidas Registradas */}
           <Text style={styles.sectionTitle}>Comidas del Día</Text>
           
           {loading ? (

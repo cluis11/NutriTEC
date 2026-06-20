@@ -10,7 +10,7 @@ import GestionRecetas from "./src/screens/GestionRecetas";
 
 export type RootStackParamList = {
   Login: undefined;
-  Dashboard: { idCliente: number } | undefined;
+  Dashboard: { usuario: number } | undefined;
   GestionRecetas: undefined;
 };
 
