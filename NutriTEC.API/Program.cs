@@ -12,7 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 // SERVICIOS
 // ============================================================
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new NutriTEC.API.DateTimeJsonConverter());
+    });
 
 // CORS
 builder.Services.AddCors(options =>
