@@ -34,7 +34,23 @@ namespace NutriTEC.API.Services
 
             return nutricionista;
         }
-        public Task ActualizarPerfil(int id, Nutricionista nutricionista) => throw new NotImplementedException();
+
+        public async Task ActualizarPerfil(int id, Nutricionista nutricionista)
+        {
+            var existing = await _nutricionistaRepository.ObtenerNutricionista(id);
+            if (existing == null)
+                throw new KeyNotFoundException("Nutricionista no encontrado");
+
+            if (nutricionista.Correo != existing.Correo)
+                if (await _nutricionistaRepository.CorreoExiste(nutricionista.Correo))
+                    throw new InvalidOperationException("El correo ya está registrado");
+
+            nutricionista.Contrasena = BCrypt.Net.BCrypt.HashPassword(nutricionista.Contrasena);
+            nutricionista.Id_usuario = id;
+
+            await _nutricionistaRepository.ActualizarNutricionista(nutricionista);
+        }
+
         public Task<List<Cliente>> ObtenerPacientes(int id_nutricionista) => throw new NotImplementedException();
         public Task<List<ClienteDisponibleDTO>> ObtenerPacientesDisponibles() => throw new NotImplementedException();
         public Task AsociarPaciente(int id_nutricionista, int id_cliente) => throw new NotImplementedException();
