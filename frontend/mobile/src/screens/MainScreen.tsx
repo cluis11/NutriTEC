@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { styles } from './ClientStyles';
 
-const API_BASE_URL = 'http://192.168.124.7:5108';  //CAMBIO DE IP POR RED
+const API_BASE_URL = "http://localhost:5108";
 
 
 interface Comida {
@@ -32,16 +32,26 @@ interface Producto {
 }
 
 interface Props {
-  navigation: any; 
+  navigation: any;
+  route: any;
 }
 
-export default function ClientDashboardScreen({ navigation }: Props) {
-  // Definir estados iniciales
-  const [idClienteLogueado] = useState<number>(4); //Valor 4 por default, mientras realizo pruebas
+export default function ClientDashboardScreen({ navigation, route }: Props) {
+  
+  const [idClienteLogueado, setIdClienteLogueado] = useState<number>(
+    route.params?.idCliente || 4
+  );
+
+  useEffect(() => {
+    if (route.params?.idCliente) {
+      setIdClienteLogueado(route.params.idCliente);
+    }
+  }, [route.params?.idCliente]);
+
   const [comidasAsignadas, setComidasAsignadas] = useState<Comida[]>([]);
   const [fechaPivote, setFechaPivote] = useState<Date>(new Date());
   
-  // Fecha de hoy
+
   const [fechaSeleccionadaStr, setFechaSeleccionadaStr] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -49,11 +59,11 @@ export default function ClientDashboardScreen({ navigation }: Props) {
   const [caloriasTotales, setCaloriasTotales] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Inputs
+
   const [nuevoTiempo, setNuevoTiempo] = useState<string>('Almuerzo');
   const [porcionComida, setPorcionComida] = useState<string>('1');
 
-  // Buscador
+
   const [listaProductos, setListaProductos] = useState<Producto[]>([]);
   const [filtroAlimento, setFiltroAlimento] = useState<string>('');
   const [alimentoSeleccionado, setAlimentoSeleccionado] = useState<Producto | null>(null);
@@ -64,7 +74,7 @@ export default function ClientDashboardScreen({ navigation }: Props) {
   ];
   const diasSemanaLetras = ['L', 'K', 'M', 'J', 'V', 'S', 'D'];
 
-  // Logica de fechas
+
   const obtenerDiasDeLaSemana = (fechaBase: Date): Date[] => {
     const copia = new Date(fechaBase);
     const diaSemanaIdx = copia.getDay();
@@ -87,7 +97,7 @@ export default function ClientDashboardScreen({ navigation }: Props) {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Cargar productos
+
   useEffect(() => {
     const cargarProductosAPI = async () => {
       try {
@@ -103,7 +113,7 @@ export default function ClientDashboardScreen({ navigation }: Props) {
     cargarProductosAPI();
   }, []);
 
-  // Cargar Logs por dia
+
   const cargarConsumoDiarioAPI = async () => {
     setLoading(true);
     try {
@@ -203,8 +213,8 @@ export default function ClientDashboardScreen({ navigation }: Props) {
   };
 
   useEffect(() => {
-    cargarConsumoDiarioAPI();
-  }, [fechaPivote]);
+  cargarConsumoDiarioAPI();
+  }, [fechaPivote, idClienteLogueado]);
 
   useEffect(() => {
     const comidasDelDia = comidasAsignadas.filter(c => c.fecha === fechaSeleccionadaStr);
@@ -233,9 +243,8 @@ export default function ClientDashboardScreen({ navigation }: Props) {
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ECEFF1' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}>Panel de Cliente</Text>
-            
-            // IMPLEMENTA LA REDIRECCION ACA
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}>{idClienteLogueado} </Text>
+
             <TouchableOpacity
               style={{
                 backgroundColor: '#F39C12',

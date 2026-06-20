@@ -65,8 +65,8 @@ export default function LoginScreen({ navigation }: Props) {
             text: 'OK',
             onPress: () => {
               navigation.replace('Dashboard', { 
-                usuario: idUsuario
-              }); 
+                idCliente: idUsuario
+              });
             }
           }
         ],
