@@ -14,7 +14,14 @@ namespace NutriTEC.API.Services
             _productoService = productoService;
         }
 
-        public Task<List<ReporteCobroDTO>> ObtenerReporteCobro() => throw new NotImplementedException();
-        public Task AprobarProducto(int id) => throw new NotImplementedException();
+        public async Task<List<ReporteCobroDTO>> ObtenerReporteCobro()
+        {
+            return await _adminRepository.ObtenerReporteCobro();
+        }
+
+        public async Task AprobarProducto(int id)
+        {
+            await _productoService.AprobarProducto(id);
+        }
     }
 }

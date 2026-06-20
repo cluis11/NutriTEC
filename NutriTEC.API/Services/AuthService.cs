@@ -25,8 +25,8 @@ namespace NutriTEC.API.Services
 
             if (usuario != null)
             {
-                // 2. Verificar password
-                if (usuario.Contrasena != request.Contrasena)
+                // 2. Verificar password con BCrypt
+                if (!BCrypt.Net.BCrypt.Verify(request.Contrasena, usuario.Contrasena))
                     return null;
 
                 // 3. Determinar rol
@@ -58,10 +58,10 @@ namespace NutriTEC.API.Services
                 }
             }
 
-            // 4. Buscar en Admin por correo
-            if (await _authRepository.EsAdmin(request.Correo, request.Contrasena))
+            // 4. Buscar en Admin por correo y verificar con BCrypt
+            var hashAdmin = await _authRepository.ObtenerPasswordAdmin(request.Correo);
+            if (hashAdmin != null && BCrypt.Net.BCrypt.Verify(request.Contrasena, hashAdmin))
             {
-                // TODO: verificar password del admin cuando se implemente tabla Admin con password
                 return new LoginResponseDTO
                 {
                     Token = GenerarToken(0, "admin"),

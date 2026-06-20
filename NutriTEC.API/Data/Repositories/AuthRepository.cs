@@ -32,10 +32,11 @@ namespace NutriTEC.API.Data.Repositories
                 .AnyAsync(c => c.Id_usuario == id_usuario);
         }
 
-        public async Task<bool> EsAdmin(string correo, string contrasena)
+        public async Task<string?> ObtenerPasswordAdmin(string correo)
         {
-            return await _context.Admin
-                .AnyAsync(a => a.Correo == correo && a.Contrasena == contrasena);
+            var admin = await _context.Admin
+                .FirstOrDefaultAsync(a => a.Correo == correo);
+            return admin?.Contrasena;
         }
 
         public async Task<PlanActivoDTO?> ObtenerPlanActivo(int id_cliente)
