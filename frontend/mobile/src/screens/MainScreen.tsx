@@ -236,11 +236,24 @@ export default function ClientDashboardScreen({ navigation }: Props) {
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}>Panel de Cliente</Text>
             
             // IMPLEMENTA LA REDIRECCION ACA
-            <TouchableOpacity 
-              style={{ backgroundColor: '#F39C12', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
-              onPress={() => Alert.alert("Gestión de Recetas", "Redirigiendo al recetario de NutriTEC...")}
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#F39C12',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6
+              }}
+              onPress={() => navigation.navigate('GestionRecetas')}
             >
-              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 11 }}>🍳 Recetas</Text>
+              <Text
+                style={{
+                  color: '#FFF',
+                  fontWeight: 'bold',
+                  fontSize: 11
+                }}
+              >
+                🍳 Recetas
+              </Text>
             </TouchableOpacity>
           </View>
 
