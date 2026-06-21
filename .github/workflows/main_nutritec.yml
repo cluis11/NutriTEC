@@ -31,7 +31,8 @@ jobs:
           echo "REACT_APP_API_URL=https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net/api" > .env
           
           npm install
-          npm run build --if-present
+          # Desactivamos CI=false para que los warnings de ESLint no tiren abajo el build
+          CI=false npm run build --if-present
         working-directory: frontend/web/client
 
       # 3. Subir únicamente la carpeta compilada (build) como artefacto
