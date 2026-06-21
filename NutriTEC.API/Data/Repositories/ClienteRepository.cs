@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using NutriTEC.API.Data;
+using NutriTEC.API.Data.Connection;
 using NutriTEC.API.Models;
 using NutriTEC.API.DTOs;
+using MongoDB.Driver;
 using Microsoft.Data.SqlClient;
 
 namespace NutriTEC.API.Data.Repositories
@@ -10,10 +12,12 @@ namespace NutriTEC.API.Data.Repositories
     public class ClienteRepository
     {
         private readonly NutriTECContext _context;
+        private readonly IMongoCollection<Retroalimentacion> _retroCollection;
 
-        public ClienteRepository(NutriTECContext context)
+        public ClienteRepository(NutriTECContext context, MongoDatabaseConnection mongoConnection)
         {
             _context = context;
+            _retroCollection = mongoConnection.GetDatabase().GetCollection<Retroalimentacion>("Retroalimentaciones");
         }
 
         public async Task<bool> CorreoExiste(string correo)
@@ -199,5 +203,32 @@ namespace NutriTEC.API.Data.Repositories
 
         public Task<bool> MedidaExiste(int id_cliente, DateTime fecha) => throw new NotImplementedException();
         public Task<List<MedidaVariacionDTO>> ObtenerReporteAvance(int id_cliente, DateTime fecha_inicio, DateTime fecha_fin) => throw new NotImplementedException();
+
+        // ============================================================
+        // METODOS DE MONGODB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)
+        // ============================================================
+
+        // 1. Obtener todos los hilos de foro de un paciente especifico (el mismo cliente logueado)
+        public async Task<List<Retroalimentacion>> ObtenerForosPorPaciente(int idCliente)
+        {
+            return await _retroCollection.Find(r => r.IdCliente == idCliente)
+                                         .SortByDescending(r => r.FechaCreacion)
+                                         .ToListAsync();
+        }
+
+        // 2. Obtener un solo hilo de foro por su Id (util para validar dueño antes de responder)
+        public async Task<Retroalimentacion> ObtenerForoPorId(string idForo)
+        {
+            return await _retroCollection.Find(r => r.Id == idForo).FirstOrDefaultAsync();
+        }
+
+        // 3. Agregar una respuesta de prosa del cliente a un foro existente
+        public async Task AgregarRespuestaForoAsync(string idForo, RespuestaForo respuesta)
+        {
+            var filter = Builders<Retroalimentacion>.Filter.Eq(r => r.Id, idForo);
+            var update = Builders<Retroalimentacion>.Update.Push(r => r.Respuestas, respuesta);
+
+            await _retroCollection.UpdateOneAsync(filter, update);
+        }
     }
 }

@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../App.css'; 
-import Productos from './Productos';
 
 // ==========================================
 // Importamos los módulos de cada seccion
 // ==========================================
+import Productos from './Productos';
 import RegistrarCliente from './clientSearch';
 import AsignarPlan from './assignPlan';
 import GestionPlan from './GPlan';
 // Descomentacuando cuando se crea los archivos
 // import RegistrarCuenta from './RegistrarCuenta';
-// import CatalogoProductos from './CatalogoProductos';
-// import SeguimientoCliente from './SeguimientoCliente';
+import SeguimientoCliente from './seguimiento';
 
 const NutricionistaDashboard = () => {
   const [vistaActiva, setVistaActiva] = useState('dashboard');
@@ -109,13 +108,12 @@ const NutricionistaDashboard = () => {
         {vistaActiva === 'planes' && <AsignarPlan />}
 
         {vistaActiva === 'productos' && <Productos />}
+
+        {vistaActiva === 'seguimiento' && <SeguimientoCliente />}
         
         {/* Cuando se cree los archivos, primero se importa arriba, 
-          se rederiza aca
-          
+          se rederiza aca     
           {vistaActiva === 'registro' && <RegistrarCuenta />}
-          {vistaActiva === 'productos' && <CatalogoProductos />}
-          {vistaActiva === 'seguimiento' && <SeguimientoCliente />}
         */}
         
       </main>

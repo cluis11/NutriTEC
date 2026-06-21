@@ -3,12 +3,10 @@ import '../App.css';
 
 const API_BASE_URL = "http://localhost:5108/api";
 // Simulación del nutricionista logueado actualmente
-const ID_NUTRICIONISTA_ACTUAL = 2; 
+const ID_NUTRICIONISTA_ACTUAL = 1; 
 
 const ClientSearch = () => {
-  // Pacientes ya asignados a este nutricionista
   const [pacientesAsociados, setPacientesAsociados] = useState([]);
-  // Clientes disponibles en el sistema (Vienen de la Vista del API)
   const [clientesDisponibles, setClientesDisponibles] = useState([]);
   
   // Estados de control de UI
@@ -25,7 +23,7 @@ const ClientSearch = () => {
   const cargarClientesDisponibles = async () => {
     try {
       setCargando(true);
-      const res = await fetch(`${API_BASE_URL}/plan/disponibles`);
+      const res = await fetch(`${API_BASE_URL}/nutricionista/disponibles`);
       if (!res.ok) throw new Error("No se pudieron obtener los clientes disponibles.");
       const datos = await res.json();
       setClientesDisponibles(datos);
@@ -38,7 +36,7 @@ const ClientSearch = () => {
 
   const cargarPacientesAsociados = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/plan/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
+      const res = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
       if (!res.ok) throw new Error("No se pudieron obtener tus pacientes activos.");
       const datos = await res.json();
       setPacientesAsociados(datos);
@@ -50,10 +48,10 @@ const ClientSearch = () => {
   const handleAsignarCliente = async (idCliente, nombreCliente) => {
     try {
       setMensaje(null);
-      // Consumimos el endpoint corregido de tu PlanController
-      const res = await fetch(`${API_BASE_URL}/plan/${ID_NUTRICIONISTA_ACTUAL}/cliente/${idCliente}/asignar`, {
+      const res = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/pacientes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(idCliente)
       });
 
       if (!res.ok) throw new Error("Ocurrió un error en el servidor al intentar asociar al cliente.");

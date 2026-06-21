@@ -8,6 +8,7 @@ import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
 import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
+import Retroalimentacion from './retroalimentacion';
 
 const ClientMain = () => {
   const navigate = useNavigate();
@@ -337,6 +338,7 @@ const ClientMain = () => {
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
             {vistaActiva === 'recetas' && <GestionRecetas />}
+            {vistaActiva === 'retroalimentacion' && <Retroalimentacion />}
           </div>
         )}
       </div>

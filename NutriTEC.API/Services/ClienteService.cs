@@ -109,5 +109,29 @@ namespace NutriTEC.API.Services
         public Task RegistrarProducto(int id_cliente, DateTime fecha, string tiempo, int id_producto, decimal cantidad) => throw new NotImplementedException();
         public Task RegistrarDesdePlan(int id_cliente, DateTime fecha, string tiempo) => throw new NotImplementedException();
         public Task RegistrarDesdeReceta(int id_cliente, DateTime fecha, string tiempo, int id_receta) => throw new NotImplementedException();
+
+        // ============================================================
+        // SERVICIOS MONGODB ATLAS (FORO - LADO CLIENTE)
+        // ============================================================
+
+        // El cliente solo puede ver los foros que le pertenecen a el mismo
+        public async Task<List<Retroalimentacion>> ObtenerForoPropio(int id_cliente)
+        {
+            return await _clienteRepository.ObtenerForosPorPaciente(id_cliente);
+        }
+
+        public async Task ResponderForo(int id_cliente, string idForo, RespuestaForo respuesta)
+        {
+            var foro = await _clienteRepository.ObtenerForoPorId(idForo);
+            if (foro == null)
+                throw new KeyNotFoundException("El foro indicado no existe.");
+
+            if (foro.IdCliente != id_cliente)
+                throw new UnauthorizedAccessException("Este foro no pertenece a este cliente.");
+
+            respuesta.Fecha = DateTime.UtcNow;
+            respuesta.Remitente = "Cliente";
+            await _clienteRepository.AgregarRespuestaForoAsync(idForo, respuesta);
+        }
     }
 }
