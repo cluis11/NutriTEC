@@ -24,7 +24,7 @@ function GestionRecetas() {
 
   const cargarProductosAprobados = async () => {
     try {
-      const response = await fetch("http://localhost:5108/api/producto/aprobados");
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/producto/aprobados`);
       if (!response.ok) throw new Error("Error al cargar productos aprobados.");
       setProductosAprobados(await response.json());
     } catch (error) { alert(error.message); }
@@ -35,7 +35,7 @@ function GestionRecetas() {
     const idBuscar = idOverride || idClienteBusqueda;
     if (!String(idBuscar).trim()) { alert("Ingrese el ID del cliente."); return; }
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/cliente/${idBuscar}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/cliente/${idBuscar}`);
       if (!response.ok) throw new Error("Error al cargar recetas.");
       setRecetas(await response.json());
       setRecetaEditando(null);
@@ -44,7 +44,7 @@ function GestionRecetas() {
 
   const cargarDetalleReceta = async (idReceta) => {
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/${idReceta}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${idReceta}`);
       if (!response.ok) throw new Error("Error al cargar detalle de la receta.");
       const data = await response.json();
       setRecetaEditando(data);
@@ -74,7 +74,7 @@ function GestionRecetas() {
     if (!nombreReceta.trim()) { alert("Ingrese el nombre de la receta."); return; }
     if (productosReceta.length === 0) { alert("Agregue al menos un producto."); return; }
     try {
-      const response = await fetch("http://localhost:5108/api/receta", {
+      const response = await fetch("${process.env.REACT_APP_API_URL}/api/receta", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_cliente: Number(idCliente), nombre: nombreReceta, productos: productosReceta.map(p => ({ id_producto: p.id_producto, cantidad: p.cantidad })) })
       });
@@ -88,7 +88,7 @@ function GestionRecetas() {
   const actualizarNombreReceta = async () => {
     if (!recetaEditando || !nombreEditado.trim()) { alert("Ingrese el nuevo nombre."); return; }
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/${recetaEditando.id_receta}/nombre`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${recetaEditando.id_receta}/nombre`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: nombreEditado })
       });
@@ -103,7 +103,7 @@ function GestionRecetas() {
     if (!recetaEditando || !productoAgregar) { alert("Seleccione un producto."); return; }
     if (recetaEditando.productos?.some(p => p.id_producto === Number(productoAgregar))) { alert("Ese producto ya está en la receta."); return; }
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/${recetaEditando.id_receta}/producto`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${recetaEditando.id_receta}/producto`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_producto: Number(productoAgregar), cantidad: Number(cantidadAgregar) })
       });
@@ -116,7 +116,7 @@ function GestionRecetas() {
   const eliminarProductoDeRecetaExistente = async (idProducto) => {
     if (!recetaEditando || !window.confirm("¿Desea quitar este producto?")) return;
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/${recetaEditando.id_receta}/producto/${idProducto}`, { method: "DELETE" });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${recetaEditando.id_receta}/producto/${idProducto}`, { method: "DELETE" });
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al quitar producto.");
       alert("Producto eliminado."); cargarDetalleReceta(recetaEditando.id_receta);
     } catch (error) { alert(error.message); }
@@ -125,7 +125,7 @@ function GestionRecetas() {
   const eliminarReceta = async (idReceta) => {
     if (!window.confirm("¿Desea eliminar esta receta?")) return;
     try {
-      const response = await fetch(`http://localhost:5108/api/receta/${idReceta}`, { method: "DELETE" });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${idReceta}`, { method: "DELETE" });
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al eliminar receta.");
       alert("Receta eliminada."); setRecetaEditando(null); cargarRecetasPorCliente();
     } catch (error) { alert(error.message); }

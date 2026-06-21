@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API_URL = "http://localhost:5108";
+const API_URL = process.env.REACT_APP_API_URL;
 
 // ─── REGISTRO ─────────────────────────────────────────────────────────────────
 const RegistroForm = ({ onVolver }) => {
