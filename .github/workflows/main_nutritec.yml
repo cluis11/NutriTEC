@@ -28,7 +28,7 @@ jobs:
       - name: npm install and build with env variables
         run: |
           # Creamos el archivo .env en caliente dentro de la carpeta del frontend
-          echo "REACT_APP_API_URL=https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net/api" > .env
+          echo "REACT_APP_API_URL=https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net" > .env
           
           npm install
           # Desactivamos CI=false para que los warnings de ESLint no tiren abajo el build
