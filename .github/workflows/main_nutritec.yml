@@ -18,20 +18,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Configurar Node.js
+      # 1. Configurar Node.js en la máquina virtual
       - name: Set up Node.js version
-        uses: actions/setup-node@v4 # Actualizado a la v4 que es más estable
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
 
-      # 2. Correr la instalación y la compilación dentro de la subcarpeta del cliente
-      - name: npm install, build, and test
+      # 2. Crear el archivo .env, instalar dependencias y compilar el React
+      - name: npm install and build with env variables
         run: |
-          npm ci
+          # Creamos el archivo .env en caliente dentro de la carpeta del frontend
+          echo "REACT_APP_API_URL=https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net/api" > .env
+          
+          npm install
           npm run build --if-present
         working-directory: frontend/web/client
 
-      # 3. Subir ÚNICAMENTE la carpeta compilada (build) como el artefacto
+      # 3. Subir únicamente la carpeta compilada (build) como artefacto
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -46,12 +49,12 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
-      # 4. Descargar la carpeta build que se compiló en el paso anterior
+      # 4. Descargar los archivos estáticos de la compilación
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: ./build # Forzamos a que se descargue en una carpeta llamada build
+          path: ./build
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -60,11 +63,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9BC42333377244958439B96DAE1E11F2 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CD14913A98214D898659ACD01631214A }}
 
-      # 5. Desplegar los archivos estáticos finales a Azure
+      # 5. Desplegar los archivos finales al App Service de Azure
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'nutritec'
           slot-name: 'Production'
-          package: ./build # Le indicamos a Azure que suba el contenido de la carpeta build
+          package: ./build
