@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using NutriTEC.API.Models;
 using NutriTEC.API.Services;
+using NutriTEC.API.DTOs;
+
 
 namespace NutriTEC.API.Controllers
 {
