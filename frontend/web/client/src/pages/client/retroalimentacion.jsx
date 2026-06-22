@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import '../App.css';
+import '../../App.css';
 
 // ============================================================
 // CONFIGURACIÓN DE LA API
