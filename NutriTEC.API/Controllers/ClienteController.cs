@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using NutriTEC.API.DTOs;
 using NutriTEC.API.Models;
 using NutriTEC.API.Services;
 
@@ -74,6 +73,13 @@ namespace NutriTEC.API.Controllers
             }
         }
 
+        [HttpPost("{id}/medidas")]
+        public Task<IActionResult> RegistrarMedida(int id, [FromBody] Medida medida) => throw new NotImplementedException();
+
+        [HttpGet("{id}/medidas/reporte")]
+        public Task<IActionResult> ObtenerReporteAvance(int id, [FromQuery] DateTime fecha_inicio, [FromQuery] DateTime fecha_fin) => throw new NotImplementedException();
+
+   
         [HttpGet("{id}/registro")]
         public async Task<IActionResult> ObtenerRegistroDiario(int id, [FromQuery] DateTime fecha)
         {
@@ -106,16 +112,50 @@ namespace NutriTEC.API.Controllers
             }
         }
 
-        [HttpPost("{id}/medidas")]
-        public Task<IActionResult> RegistrarMedida(int id, [FromBody] Medida medida) => throw new NotImplementedException();
-
-        [HttpGet("{id}/medidas/reporte")]
-        public Task<IActionResult> ObtenerReporteAvance(int id, [FromQuery] DateTime fecha_inicio, [FromQuery] DateTime fecha_fin) => throw new NotImplementedException();
-
         [HttpPost("{id}/registro/plan")]
         public Task<IActionResult> RegistrarDesdePlan(int id, [FromBody] object request) => throw new NotImplementedException();
 
         [HttpPost("{id}/registro/receta")]
         public Task<IActionResult> RegistrarDesdeReceta(int id, [FromBody] object request) => throw new NotImplementedException();
+
+        // ============================================================
+        // ENDPOINTS DE MONGO DB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)
+        // ============================================================
+
+        [HttpGet("{id}/retroalimentacion")]
+        public async Task<IActionResult> ObtenerForoPropio(int id)
+        {
+            try
+            {
+                var foros = await _clienteService.ObtenerForoPropio(id);
+                return Ok(foros);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/retroalimentacion/responder/{idForo}")]
+        public async Task<IActionResult> ResponderForo(int id, string idForo, [FromBody] RespuestaForo nuevaRespuesta)
+        {
+            try
+            {
+                await _clienteService.ResponderForo(id, idForo, nuevaRespuesta);
+                return Ok(new { mensaje = "Respuesta añadida al foro correctamente." });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { mensaje = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
     }
 }

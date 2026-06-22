@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import '../App.css'; 
+import '../../App.css'; 
 
-const API_BASE_URL = "http://localhost:5108/api";
-const ID_NUTRICIONISTA_ACTUAL = 2; 
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+const ID_NUTRICIONISTA_ACTUAL = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
 
 const NOMBRES_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];

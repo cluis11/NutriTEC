@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import '../App.css'; 
+import '../../App.css'; 
 
-const API_BASE_URL = "http://localhost:5108/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 // Simulación del nutricionista logueado actualmente
-const ID_NUTRICIONISTA_ACTUAL = 1; 
+const ID_NUTRICIONISTA_ACTUAL = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
 
 const ClientSearch = () => {
   const [pacientesAsociados, setPacientesAsociados] = useState([]);

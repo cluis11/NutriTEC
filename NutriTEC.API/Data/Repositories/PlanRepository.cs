@@ -145,55 +145,6 @@ namespace NutriTEC.API.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<PacienteActivoDTO>> ObtenerPacientes(int id_nutricionista)
-        {
-            return await _context.ClientexNutricionista
-                .Where(cn => cn.Id_nutricionista == id_nutricionista)
-                .Join(_context.Usuario,
-                    cn => cn.Id_cliente,
-                    u => u.Id_usuario,
-                    (cn, u) => new { cn, u })
-                .Join(_context.Cliente,
-                    x => x.cn.Id_cliente,
-                    c => c.Id_usuario,
-                    (x, c) => new PacienteActivoDTO
-                    {
-                        Id_usuario = x.u.Id_usuario,
-                        Nombre = x.u.Nombre,
-                        Ap1 = x.u.Ap1,
-                        Ap2 = x.u.Ap2 ?? string.Empty,
-                        Fecha_nacimiento = x.u.Fecha_nacimiento,
-                        Correo = x.u.Correo,
-                        Pais = c.Pais,
-                        Consumo_maximo = (int)c.Consumo_maximo
-                    })
-                .ToListAsync();
-        }
-
-        public async Task<List<ClienteDisponibleDTO>> ObtenerClientes()
-        {
-            var clientesConNutri = await _context.ClientexNutricionista
-                .Select(cn => cn.Id_cliente)
-                .ToListAsync();
-
-            return await _context.Cliente
-                .Where(c => !clientesConNutri.Contains(c.Id_usuario))
-                .Join(_context.Usuario,
-                    c => c.Id_usuario,
-                    u => u.Id_usuario,
-                    (c, u) => new ClienteDisponibleDTO
-                    {
-                        Id_usuario = u.Id_usuario,
-                        Nombre = u.Nombre,
-                        Ap1 = u.Ap1,
-                        Ap2 = u.Ap2 ?? string.Empty,
-                        Fecha_nacimiento = u.Fecha_nacimiento,
-                        Correo = u.Correo,
-                        Pais = c.Pais
-                    })
-                .ToListAsync();
-        }
-
         public async Task AsignarCliente(int id_nutricionista, int id_cliente)
         {
             _context.ClientexNutricionista.Add(new ClientexNutricionista
@@ -202,20 +153,6 @@ namespace NutriTEC.API.Data.Repositories
                 Id_cliente = id_cliente
             });
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<AsignarPlanDTO>> ObtenerAsignacionesCliente(int id_cliente)
-        {
-            return await _context.PlanxCliente
-                .Where(pc => pc.Id_cliente == id_cliente)
-                .Select(pc => new AsignarPlanDTO
-                {
-                    Id_plan = pc.Id_plan,
-                    Id_cliente = pc.Id_cliente,
-                    Fecha_inicio = pc.Inicio,
-                    Fecha_fin = pc.Fin
-                })
-                .ToListAsync();
         }
 
         public async Task AsignarPlan(int id_plan, int id_cliente, DateTime inicio, DateTime fin)

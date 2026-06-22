@@ -90,48 +90,6 @@ namespace NutriTEC.API.Controllers
             }
         }
 
-        [HttpGet("nutricionista/{id}/clientes")]
-        public async Task<IActionResult> ObtenerClientesActivos(int id)
-        {
-            var clientes = await _planService.ObtenerClientesActivos(id);
-            return Ok(clientes);
-        }
-
-        [HttpGet("disponibles")]
-        public async Task<IActionResult> ObtenerClientesDisponibles()
-        {
-            var clientes = await _planService.ObtenerClientesDisponibles();
-            return Ok(clientes);
-        }
-
-        [HttpPost("{id_nutricionista}/cliente/{id_cliente}/asignar")]
-        public async Task<IActionResult> AsignarCliente(int id_nutricionista, int id_cliente)
-        {
-           try
-            {
-                await _planService.AsignarCliente(id_nutricionista, id_cliente);
-                return Ok(new { mensaje = "Cliente asignado correctamente." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { mensaje = ex.Message });
-            }
-        }
-
-        [HttpGet("cliente/{id_cliente}/asignaciones")]
-        public async Task<IActionResult> ObtenerAsignacionesCliente(int id_cliente)
-        {
-            try
-            {
-                var asignaciones = await _planService.ObtenerAsignacionesCliente(id_cliente);
-                return Ok(asignaciones); 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { mensaje = ex.Message });
-            }
-        }
-
         [HttpPost("asignar")]
         public async Task<IActionResult> AsignarPlan([FromBody] AsignarPlanDTO asignacion)
         {

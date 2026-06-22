@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Main from './pages/main';
-import Medida from './pages/insertMedida';
-import Productos from './pages/Productos';
-import Reporte from './pages/reporte';
+import MainCliente from './pages/client/main';
+import MainNutri from './pages/nutri/main';
+import MainAdmin from './pages/admin/admin';
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -18,15 +16,9 @@ function App() {
     return <Login onLoginExitoso={handleLoginExitoso} />;
   }
 
-  return (
-    <Routes>
-      <Route path="/" element={<Main />} />
-      <Route path="/medida" element={<Medida />} />
-      <Route path="/productos" element={<Productos />} />
-      <Route path="/reporte" element={<Reporte />} />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
-  );
+  if (usuario.rol === 'admin') return <MainAdmin />;
+  if (usuario.rol === 'nutricionista') return <MainNutri />;
+  return <MainCliente />;
 }
 
 export default App;

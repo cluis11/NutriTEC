@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../App.css';  
+import '../../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Navbar from '../components/Navbar';
+import Navbar from '../../components/Navbar';
 
 import Productos from './Productos';
 import RegistroMedidas from './insertMedida';
 import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
+import Retroalimentacion from './retroalimentacion';
 
 const ClientMain = () => {
   const navigate = useNavigate();
@@ -189,14 +190,14 @@ const ClientMain = () => {
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       <Navbar onVerPerfil={() => setVistaActiva('perfil')} onCerrarSesion={handleCerrarSesion} />
 
-      {/* Menú de navegación */}
       <div className="d-flex gap-2 px-4 pt-3 pb-2 flex-wrap" style={{ borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
         {[
           { key: 'dashboard', label: '📅 Registro Diario' },
           { key: 'medida', label: '📏 Medidas' },
           { key: 'productos', label: '🥦 Productos' },
           { key: 'recetas', label: '🍽️ Recetas' },
-          { key: 'reporte', label: '📊 Reporte' }
+          { key: 'reporte', label: '📊 Reporte' },
+          { key: 'retroalimentacion', label: '💬 Seguimiento Nutricionista' }
         ].map(({ key, label }) => (
           <button
             key={key}
@@ -213,6 +214,19 @@ const ClientMain = () => {
             {label}
           </button>
         ))}
+        {usuario.plan_activo && (
+          <span style={{
+            background: '#e8f8f5',
+            color: '#16a085',
+            border: '1px solid #1abc9c',
+            borderRadius: '8px',
+            padding: '4px 12px',
+            fontSize: '13px',
+            fontWeight: '600'
+          }}>
+            📋 Plan: {usuario.plan_activo.nombre}
+          </span>
+        )}
         <button
           className="btn btn-sm ms-auto"
           style={{ color: '#ef4444', border: '1px solid #fecaca', borderRadius: '8px' }}
@@ -225,7 +239,6 @@ const ClientMain = () => {
       <div className="container-fluid p-3">
         {vistaActiva === 'dashboard' && (
           <div className="row g-3">
-            {/* Calendario semanal */}
             <div className="col-12 col-lg-9">
               <div className="card border-0 shadow-sm p-3 bg-white rounded-3 style-lg-height d-flex flex-column calendar-container">
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -273,7 +286,6 @@ const ClientMain = () => {
               </div>
             </div>
 
-            {/* Registro de comida */}
             <div className="col-12 col-md-6 col-lg-3">
               <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
                 <h4 className="fw-bold mb-3" style={{ color: "#2c3e50" }}>Registrar alimento</h4>
@@ -337,6 +349,7 @@ const ClientMain = () => {
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
             {vistaActiva === 'recetas' && <GestionRecetas />}
+            {vistaActiva === 'retroalimentacion' && <Retroalimentacion />}
           </div>
         )}
       </div>
