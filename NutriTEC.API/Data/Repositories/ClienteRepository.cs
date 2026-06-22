@@ -185,7 +185,8 @@ namespace NutriTEC.API.Data.Repositories
         public async Task<(bool Excedido, string MensajeAlerta)> ExcesoCalorico(int idCliente, DateTime fecha)
         {
             var connection = _context.Database.GetDbConnection();
-            await connection.OpenAsync();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             command.CommandText = "sp_ExcesoCalorico";
@@ -201,6 +202,85 @@ namespace NutriTEC.API.Data.Repositories
             return (false, string.Empty);
         }
 
+        // ============================================================
+        // REGISTRO DESDE PLAN Y RECETA (nuevos)
+        // ============================================================
+
+        public async Task RegistrarDesdePlan(int idCliente, DateTime fecha, string tiempo)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SP_RegistrarDesdePlan";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@id_cliente", idCliente));
+            command.Parameters.Add(new SqlParameter("@fecha", fecha.Date));
+            command.Parameters.Add(new SqlParameter("@tiempo", tiempo));
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task RegistrarDesdeReceta(int idCliente, DateTime fecha, string tiempo, int idReceta)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SP_RegistrarDesdeReceta";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@id_cliente", idCliente));
+            command.Parameters.Add(new SqlParameter("@fecha", fecha.Date));
+            command.Parameters.Add(new SqlParameter("@tiempo", tiempo));
+            command.Parameters.Add(new SqlParameter("@id_receta", idReceta));
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<PlanActivoConProductosDTO?> ObtenerPlanActivoConProductos(int idCliente)
+        {
+            var hoy = DateTime.Today;
+
+            var planAsignado = await _context.PlanxCliente
+                .Where(pc => pc.Id_cliente == idCliente && hoy >= pc.Inicio && hoy <= pc.Fin)
+                .Join(_context.PlanAlimentacion,
+                    pc => pc.Id_plan,
+                    p => p.Id_plan,
+                    (pc, p) => new { p.Id_plan, p.Nombre, pc.Inicio, pc.Fin })
+                .FirstOrDefaultAsync();
+
+            if (planAsignado == null) return null;
+
+            var productos = await _context.ProductoxPlan
+                .Where(pp => pp.Id_plan == planAsignado.Id_plan)
+                .Join(_context.Producto,
+                    pp => pp.Id_producto,
+                    p => p.Id_producto,
+                    (pp, p) => new ProductoEnPlanDTO
+                    {
+                        Id_producto = p.Id_producto,
+                        Descripcion = p.Descripcion,
+                        Tiempo = pp.Tiempo,
+                        Cantidad = pp.Cantidad,
+                        Energia = p.Energia,
+                        Proteina = p.Proteina,
+                        Carbohidratos = p.Carbohidratos,
+                        Grasa = p.Grasa
+                    })
+                .ToListAsync();
+
+            return new PlanActivoConProductosDTO
+            {
+                Id_plan = planAsignado.Id_plan,
+                Nombre = planAsignado.Nombre,
+                Inicio = planAsignado.Inicio,
+                Fin = planAsignado.Fin,
+                Productos = productos
+            };
+        }
+
         public Task<bool> MedidaExiste(int id_cliente, DateTime fecha) => throw new NotImplementedException();
         public Task<List<MedidaVariacionDTO>> ObtenerReporteAvance(int id_cliente, DateTime fecha_inicio, DateTime fecha_fin) => throw new NotImplementedException();
 
@@ -208,7 +288,6 @@ namespace NutriTEC.API.Data.Repositories
         // METODOS DE MONGODB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)
         // ============================================================
 
-        // 1. Obtener todos los hilos de foro de un paciente especifico (el mismo cliente logueado)
         public async Task<List<Retroalimentacion>> ObtenerForosPorPaciente(int idCliente)
         {
             return await _retroCollection.Find(r => r.IdCliente == idCliente)
@@ -216,13 +295,11 @@ namespace NutriTEC.API.Data.Repositories
                                          .ToListAsync();
         }
 
-        // 2. Obtener un solo hilo de foro por su Id (util para validar dueño antes de responder)
         public async Task<Retroalimentacion> ObtenerForoPorId(string idForo)
         {
             return await _retroCollection.Find(r => r.Id == idForo).FirstOrDefaultAsync();
         }
 
-        // 3. Agregar una respuesta de prosa del cliente a un foro existente
         public async Task AgregarRespuestaForoAsync(string idForo, RespuestaForo respuesta)
         {
             var filter = Builders<Retroalimentacion>.Filter.Eq(r => r.Id, idForo);
