@@ -20,7 +20,6 @@ namespace NutriTEC.API.Services
                 throw new InvalidOperationException("El correo ya está registrado");
 
             nutricionista.Contrasena = BCrypt.Net.BCrypt.HashPassword(nutricionista.Contrasena);
-            nutricionista.Foto = null;
 
             return await _nutricionistaRepository.CrearNutricionista(nutricionista);
         }
@@ -45,7 +44,14 @@ namespace NutriTEC.API.Services
                 if (await _nutricionistaRepository.CorreoExiste(nutricionista.Correo))
                     throw new InvalidOperationException("El correo ya está registrado");
 
-            nutricionista.Contrasena = BCrypt.Net.BCrypt.HashPassword(nutricionista.Contrasena);
+            if (!string.IsNullOrWhiteSpace(nutricionista.Contrasena))
+                nutricionista.Contrasena = BCrypt.Net.BCrypt.HashPassword(nutricionista.Contrasena);
+            else
+                nutricionista.Contrasena = await _nutricionistaRepository.ObtenerContrasena(id);
+
+            if (string.IsNullOrWhiteSpace(nutricionista.Foto))
+                nutricionista.Foto = await _nutricionistaRepository.ObtenerFoto(id);
+
             nutricionista.Id_usuario = id;
 
             await _nutricionistaRepository.ActualizarNutricionista(nutricionista);

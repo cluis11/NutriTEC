@@ -20,6 +20,20 @@ namespace NutriTEC.API.Data.Repositories
             _retroCollection = mongoConnection.GetDatabase().GetCollection<Retroalimentacion>("Retroalimentaciones");
         }
 
+        public async Task<string> ObtenerContrasena(int id)
+        {
+            var usuario = await _context.Usuario
+                .FirstOrDefaultAsync(u => u.Id_usuario == id);
+            return usuario?.Contrasena ?? string.Empty;
+        }
+
+        public async Task<string?> ObtenerFoto(int id)
+        {
+            var nutri = await _context.Nutricionista
+                .FirstOrDefaultAsync(n => n.Id_usuario == id);
+            return nutri?.Foto;
+        }
+
         public async Task<bool> CorreoExiste(string correo)
         {
             return await _context.Usuario
