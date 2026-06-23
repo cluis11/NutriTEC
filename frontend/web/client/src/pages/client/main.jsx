@@ -21,7 +21,7 @@ const ClientMain = () => {
   const [comidasAsignadas, setComidasAsignadas] = useState([]);
   const [fechaPivote, setFechaPivote] = useState(new Date());
 
-  const [tipoRegistro, setTipoRegistro] = useState('producto'); // producto | receta | plan
+  const [tipoRegistro, setTipoRegistro] = useState('producto');
   const [fechaComida, setFechaComida] = useState(new Date().toISOString().split('T')[0]);
   const [tiempoComida, setTiempoComida] = useState('desayuno');
   const [porcionComida, setPorcionComida] = useState(1);
@@ -174,41 +174,19 @@ const ClientMain = () => {
       let url, body, msg;
 
       if (tipoRegistro === 'producto') {
-        if (!alimentoSeleccionado) {
-          alert("Seleccioná un alimento de la lista.");
-          return;
-        }
+        if (!alimentoSeleccionado) { alert("Seleccioná un alimento de la lista."); return; }
         url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro`;
-        body = {
-          id_cliente: idClienteLogueado,
-          fecha: fechaComida,
-          tiempo: tiempoComida,
-          id_producto: alimentoSeleccionado.id_producto,
-          cantidad: parseFloat(porcionComida)
-        };
+        body = { id_cliente: idClienteLogueado, fecha: fechaComida, tiempo: tiempoComida, id_producto: alimentoSeleccionado.id_producto, cantidad: parseFloat(porcionComida) };
         msg = "producto";
       } else if (tipoRegistro === 'receta') {
-        if (!recetaSeleccionada) {
-          alert("Seleccioná una receta.");
-          return;
-        }
+        if (!recetaSeleccionada) { alert("Seleccioná una receta."); return; }
         url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro/receta`;
-        body = {
-          fecha: fechaComida,
-          tiempo: tiempoComida,
-          id_receta: parseInt(recetaSeleccionada)
-        };
+        body = { fecha: fechaComida, tiempo: tiempoComida, id_receta: parseInt(recetaSeleccionada) };
         msg = "receta";
       } else if (tipoRegistro === 'plan') {
-        if (!usuario.plan_activo) {
-          alert("No tenés un plan activo.");
-          return;
-        }
+        if (!usuario.plan_activo) { alert("No tenés un plan activo."); return; }
         url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro/plan`;
-        body = {
-          fecha: fechaComida,
-          tiempo: tiempoComida
-        };
+        body = { fecha: fechaComida, tiempo: tiempoComida };
         msg = "plan";
       }
 
@@ -220,11 +198,7 @@ const ClientMain = () => {
 
       const data = await response.json();
       if (response.ok) {
-        if (data.excedido) {
-          alert(data.mensaje);
-        } else {
-          alert(data.mensaje || `¡${msg} registrado con éxito!`);
-        }
+        if (data.excedido) { alert(data.mensaje); } else { alert(data.mensaje || `¡${msg} registrado con éxito!`); }
         setFiltroAlimento('');
         setAlimentoSeleccionado(null);
         setRecetaSeleccionada('');
@@ -275,15 +249,7 @@ const ClientMain = () => {
           </button>
         ))}
         {usuario.plan_activo && (
-          <span style={{
-            background: '#e8f8f5',
-            color: '#16a085',
-            border: '1px solid #1abc9c',
-            borderRadius: '8px',
-            padding: '4px 12px',
-            fontSize: '13px',
-            fontWeight: '600'
-          }}>
+          <span style={{ background: '#e8f8f5', color: '#16a085', border: '1px solid #1abc9c', borderRadius: '8px', padding: '4px 12px', fontSize: '13px', fontWeight: '600' }}>
             📋 Plan: {usuario.plan_activo.nombre}
           </span>
         )}
@@ -446,11 +412,215 @@ const ClientMain = () => {
             {vistaActiva === 'reporte' && <ReporteAvance />}
             {vistaActiva === 'recetas' && <GestionRecetas />}
             {vistaActiva === 'retroalimentacion' && <Retroalimentacion />}
+            {vistaActiva === 'perfil' && <MiPerfil />}
           </div>
         )}
       </div>
     </div>
   );
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// VISTA MI PERFIL — Editar perfil del cliente
+// ────────────────────────────────────────────────────────────────────────────
+const MiPerfil = () => {
+  const usuario = JSON.parse(localStorage.getItem('usuario')) || {};
+  const idUsuario = usuario.id_usuario;
+
+  const [datos, setDatos] = useState(null);
+  const [editando, setEditando] = useState(false);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [error, setError] = useState('');
+
+  const [cambiandoPass, setCambiandoPass] = useState(false);
+  const [nuevaPass, setNuevaPass] = useState('');
+  const [errorPass, setErrorPass] = useState('');
+  const [mensajePass, setMensajePass] = useState('');
+  const [guardandoPass, setGuardandoPass] = useState(false);
+
+  useEffect(() => {
+    const cargarPerfil = async () => {
+      try {
+        setCargando(true);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idUsuario}`);
+        if (!response.ok) throw new Error('Error al cargar perfil');
+        const data = await response.json();
+        setDatos(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargarPerfil();
+  }, [idUsuario]);
+
+  const handleChange = (e) => {
+    setDatos({ ...datos, [e.target.name]: e.target.value });
+  };
+
+  const handleGuardar = async () => {
+    try {
+      setGuardando(true);
+      setError('');
+      setMensaje('');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idUsuario}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.mensaje || 'Error al guardar');
+      setMensaje('Perfil actualizado correctamente.');
+      setEditando(false);
+      const usuarioActual = JSON.parse(localStorage.getItem('usuario')) || {};
+      usuarioActual.correo = datos.correo;
+      localStorage.setItem('usuario', JSON.stringify(usuarioActual));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleCambiarPass = async () => {
+    setErrorPass('');
+    setMensajePass('');
+    if (!nuevaPass) { setErrorPass('Ingresá una nueva contraseña.'); return; }
+    if (nuevaPass.length < 8) { setErrorPass('La contraseña debe tener al menos 8 caracteres.'); return; }
+    try {
+      setGuardandoPass(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idUsuario}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...datos, contrasena: nuevaPass })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.mensaje || 'Error al cambiar contraseña');
+      setMensajePass('Contraseña actualizada correctamente.');
+      setNuevaPass('');
+      setCambiandoPass(false);
+    } catch (err) {
+      setErrorPass(err.message);
+    } finally {
+      setGuardandoPass(false);
+    }
+  };
+
+  if (cargando) return <p>Cargando perfil...</p>;
+  if (!datos) return <div className="alert alert-danger">No se pudo cargar el perfil.</div>;
+
+  return (
+    <div>
+      <header className="header-title mb-4">
+        <h1>Mi Perfil</h1>
+        <p>Gestiona tus datos personales.</p>
+      </header>
+
+      {mensaje && <div className="alert alert-success">{mensaje}</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      <div className="row g-4">
+        <div className="col-12 col-md-4">
+          <div className="bg-white rounded-3 shadow-sm p-4 text-center">
+            <div style={{ width: '150px', height: '150px', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', border: '4px solid #1abc9c', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: '60px', color: '#94a3b8' }}>👤</span>
+            </div>
+            <h4 className="fw-bold mt-3 mb-1" style={{ color: '#1e293b' }}>{datos.nombre} {datos.ap1}</h4>
+            <p className="text-muted small mb-0">Cliente</p>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-8 d-flex flex-column gap-3">
+
+          {/* Información personal */}
+          <div className="bg-white rounded-3 shadow-sm p-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0">Información personal</h5>
+              {!editando ? (
+                <button className="btn btn-outline-success btn-sm" onClick={() => setEditando(true)}>
+                  ✏️ Editar
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => { setEditando(false); setError(''); }}>
+                    Cancelar
+                  </button>
+                  <button className="btn btn-success btn-sm" onClick={handleGuardar} disabled={guardando}>
+                    {guardando ? 'Guardando...' : '💾 Guardar'}
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="row g-3">
+              <CampoCliente label="Correo" name="correo" value={datos.correo} editando={editando} onChange={handleChange} />
+              <CampoCliente label="País" name="pais" value={datos.pais} editando={editando} onChange={handleChange} />
+              <CampoCliente label="Consumo máximo (kcal)" name="consumo_maximo" value={datos.consumo_maximo} editando={editando} onChange={handleChange} tipo="number" />
+              <CampoCliente label="Peso (kg)" name="peso" value={datos.peso} editando={editando} onChange={handleChange} tipo="number" />
+              <CampoCliente label="Altura (m)" name="altura" value={datos.altura} editando={editando} onChange={handleChange} tipo="number" />
+            </div>
+          </div>
+
+          {/* Cambiar contraseña */}
+          <div className="bg-white rounded-3 shadow-sm p-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0">Contraseña</h5>
+              {!cambiandoPass ? (
+                <button className="btn btn-outline-warning btn-sm" onClick={() => { setCambiandoPass(true); setErrorPass(''); setMensajePass(''); }}>
+                  🔑 Cambiar contraseña
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => { setCambiandoPass(false); setNuevaPass(''); setErrorPass(''); }}>
+                    Cancelar
+                  </button>
+                  <button className="btn btn-warning btn-sm text-white" onClick={handleCambiarPass} disabled={guardandoPass}>
+                    {guardandoPass ? 'Guardando...' : '💾 Guardar'}
+                  </button>
+                </div>
+              )}
+            </div>
+            {!cambiandoPass ? (
+              <p className="mb-0" style={{ color: '#1e293b' }}>••••••••</p>
+            ) : (
+              <>
+                {errorPass && <div className="alert alert-danger py-2 small">{errorPass}</div>}
+                {mensajePass && <div className="alert alert-success py-2 small">{mensajePass}</div>}
+                <input
+                  type="password"
+                  className="form-control form-control-sm"
+                  placeholder="Nueva contraseña (mín. 8 caracteres)"
+                  value={nuevaPass}
+                  onChange={(e) => setNuevaPass(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CampoCliente = ({ label, name, value, editando, onChange, tipo = 'text' }) => (
+  <div className="col-12 col-md-6">
+    <label className="form-label small fw-semibold text-secondary mb-1">{label}</label>
+    {editando ? (
+      <input
+        type={tipo}
+        step={tipo === 'number' ? '0.01' : undefined}
+        className="form-control form-control-sm"
+        name={name}
+        value={value || ''}
+        onChange={onChange}
+      />
+    ) : (
+      <p className="mb-0" style={{ color: '#1e293b' }}>{value || '—'}</p>
+    )}
+  </div>
+);
 
 export default ClientMain;

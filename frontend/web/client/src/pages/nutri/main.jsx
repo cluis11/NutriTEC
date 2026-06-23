@@ -121,6 +121,12 @@ const MiCuenta = () => {
   const [error, setError] = useState("");
   const [fotoPreview, setFotoPreview] = useState(null);
 
+  const [cambiandoPass, setCambiandoPass] = useState(false);
+  const [nuevaPass, setNuevaPass] = useState('');
+  const [errorPass, setErrorPass] = useState('');
+  const [mensajePass, setMensajePass] = useState('');
+  const [guardandoPass, setGuardandoPass] = useState(false);
+
   useEffect(() => {
     const cargarPerfil = async () => {
       try {
@@ -185,6 +191,30 @@ const MiCuenta = () => {
     }
   };
 
+  const handleCambiarPass = async () => {
+    setErrorPass('');
+    setMensajePass('');
+    if (!nuevaPass) { setErrorPass('Ingresá una nueva contraseña.'); return; }
+    if (nuevaPass.length < 8) { setErrorPass('La contraseña debe tener al menos 8 caracteres.'); return; }
+    try {
+      setGuardandoPass(true);
+      const response = await fetch(`${API_URL}/api/nutricionista/${idUsuario}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...datos, contrasena: nuevaPass })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.mensaje || 'Error al cambiar contraseña');
+      setMensajePass('Contraseña actualizada correctamente.');
+      setNuevaPass('');
+      setCambiandoPass(false);
+    } catch (err) {
+      setErrorPass(err.message);
+    } finally {
+      setGuardandoPass(false);
+    }
+  };
+
   if (cargando) return <p>Cargando perfil...</p>;
   if (!datos) return <div className="alert alert-danger">No se pudo cargar el perfil.</div>;
 
@@ -222,7 +252,7 @@ const MiCuenta = () => {
           </div>
         </div>
 
-        <div className="col-12 col-md-8">
+        <div className="col-12 col-md-8 d-flex flex-column gap-3">
           <div className="bg-white rounded-3 shadow-sm p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h5 className="fw-bold mb-0">Información personal</h5>
@@ -253,6 +283,43 @@ const MiCuenta = () => {
               <Campo label="Altura (m)" name="altura" value={datos.altura} editando={editando} onChange={handleChange} tipo="number" />
             </div>
           </div>
+
+          {/* Cambiar contraseña */}
+          <div className="bg-white rounded-3 shadow-sm p-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0">Contraseña</h5>
+              {!cambiandoPass ? (
+                <button className="btn btn-outline-warning btn-sm" onClick={() => { setCambiandoPass(true); setErrorPass(''); setMensajePass(''); }}>
+                  🔑 Cambiar contraseña
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => { setCambiandoPass(false); setNuevaPass(''); setErrorPass(''); }}>
+                    Cancelar
+                  </button>
+                  <button className="btn btn-warning btn-sm text-white" onClick={handleCambiarPass} disabled={guardandoPass}>
+                    {guardandoPass ? 'Guardando...' : '💾 Guardar'}
+                  </button>
+                </div>
+              )}
+            </div>
+            {!cambiandoPass ? (
+              <p className="mb-0" style={{ color: '#1e293b' }}>••••••••</p>
+            ) : (
+              <>
+                {errorPass && <div className="alert alert-danger py-2 small">{errorPass}</div>}
+                {mensajePass && <div className="alert alert-success py-2 small">{mensajePass}</div>}
+                <input
+                  type="password"
+                  className="form-control form-control-sm"
+                  placeholder="Nueva contraseña (mín. 8 caracteres)"
+                  value={nuevaPass}
+                  onChange={(e) => setNuevaPass(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

@@ -6,8 +6,6 @@ function GestionRecetas() {
 
   const [productosAprobados, setProductosAprobados] = useState([]);
   const [recetas, setRecetas] = useState([]);
-  const [idCliente, setIdCliente] = useState(idUsuarioLogueado);
-  const [idClienteBusqueda, setIdClienteBusqueda] = useState(String(idUsuarioLogueado));
   const [nombreReceta, setNombreReceta] = useState("");
   const [productoSeleccionado, setProductoSeleccionado] = useState("");
   const [cantidad, setCantidad] = useState(1);
@@ -19,7 +17,7 @@ function GestionRecetas() {
 
   useEffect(() => {
     cargarProductosAprobados();
-    cargarRecetasPorCliente(null, idUsuarioLogueado);
+    cargarRecetas();
   }, []);
 
   const cargarProductosAprobados = async () => {
@@ -30,12 +28,9 @@ function GestionRecetas() {
     } catch (error) { alert(error.message); }
   };
 
-  const cargarRecetasPorCliente = async (e, idOverride) => {
-    if (e) e.preventDefault();
-    const idBuscar = idOverride || idClienteBusqueda;
-    if (!String(idBuscar).trim()) { alert("Ingrese el ID del cliente."); return; }
+  const cargarRecetas = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/cliente/${idBuscar}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/cliente/${idUsuarioLogueado}`);
       if (!response.ok) throw new Error("Error al cargar recetas.");
       setRecetas(await response.json());
       setRecetaEditando(null);
@@ -74,14 +69,14 @@ function GestionRecetas() {
     if (!nombreReceta.trim()) { alert("Ingrese el nombre de la receta."); return; }
     if (productosReceta.length === 0) { alert("Agregue al menos un producto."); return; }
     try {
-      const response = await fetch("${process.env.REACT_APP_API_URL}/api/receta", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_cliente: Number(idCliente), nombre: nombreReceta, productos: productosReceta.map(p => ({ id_producto: p.id_producto, cantidad: p.cantidad })) })
+        body: JSON.stringify({ id_cliente: idUsuarioLogueado, nombre: nombreReceta, productos: productosReceta.map(p => ({ id_producto: p.id_producto, cantidad: p.cantidad })) })
       });
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al crear receta.");
       alert("Receta creada correctamente.");
       setNombreReceta(""); setProductosReceta([]); setProductoSeleccionado(""); setCantidad(1);
-      if (String(idCliente) === String(idClienteBusqueda)) cargarRecetasPorCliente();
+      cargarRecetas();
     } catch (error) { alert(error.message); }
   };
 
@@ -95,7 +90,7 @@ function GestionRecetas() {
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al actualizar nombre.");
       alert("Nombre actualizado.");
       cargarDetalleReceta(recetaEditando.id_receta);
-      cargarRecetasPorCliente();
+      cargarRecetas();
     } catch (error) { alert(error.message); }
   };
 
@@ -127,7 +122,7 @@ function GestionRecetas() {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/${idReceta}`, { method: "DELETE" });
       if (!response.ok) throw new Error((await response.json()).mensaje || "Error al eliminar receta.");
-      alert("Receta eliminada."); setRecetaEditando(null); cargarRecetasPorCliente();
+      alert("Receta eliminada."); setRecetaEditando(null); cargarRecetas();
     } catch (error) { alert(error.message); }
   };
 
@@ -142,15 +137,9 @@ function GestionRecetas() {
           <div className="card shadow-sm border-0 p-4">
             <h2 className="h4 mb-3">Crear receta</h2>
             <form onSubmit={crearReceta}>
-              <div className="row">
-                <div className="col-12 col-md-6 mb-3">
-                  <label className="form-label">ID del cliente</label>
-                  <input type="number" className="form-control" value={idCliente} onChange={e => setIdCliente(e.target.value)} min="1" required />
-                </div>
-                <div className="col-12 col-md-6 mb-3">
-                  <label className="form-label">Nombre de la receta</label>
-                  <input className="form-control" placeholder="Ej: Desayuno alto en proteína" value={nombreReceta} onChange={e => setNombreReceta(e.target.value)} required />
-                </div>
+              <div className="mb-3">
+                <label className="form-label">Nombre de la receta</label>
+                <input className="form-control" placeholder="Ej: Desayuno alto en proteína" value={nombreReceta} onChange={e => setNombreReceta(e.target.value)} required />
               </div>
               <div className="row align-items-end">
                 <div className="col-12 col-md-7 mb-3">
@@ -197,7 +186,7 @@ function GestionRecetas() {
           {recetaEditando && (
             <div className="card shadow-sm border-0 p-4 mt-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h2 className="h4 mb-0">Editar receta #{recetaEditando.id_receta}</h2>
+                <h2 className="h4 mb-0">Editar: {recetaEditando.nombre}</h2>
                 <button className="btn btn-outline-secondary btn-sm" onClick={() => setRecetaEditando(null)}>Cerrar</button>
               </div>
               <div className="mb-3">
@@ -249,22 +238,15 @@ function GestionRecetas() {
         <div className="col-12 col-lg-5">
           <div className="card shadow-sm border-0 p-4">
             <h2 className="h4 mb-3">Mis recetas</h2>
-            <form onSubmit={cargarRecetasPorCliente} className="mb-3">
-              <label className="form-label">ID del cliente</label>
-              <div className="input-group">
-                <input type="number" className="form-control" value={idClienteBusqueda} onChange={e => setIdClienteBusqueda(e.target.value)} min="1" />
-                <button type="submit" className="btn btn-primary">Buscar</button>
-              </div>
-            </form>
             <hr />
             {recetas.length === 0 ? <p>No hay recetas para mostrar.</p> : (
               <div className="table-responsive" style={{ maxHeight: "500px", overflowY: "auto" }}>
                 <table className="table table-hover align-middle">
-                  <thead className="table-light"><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead>
+                  <thead className="table-light"><tr><th>Nombre</th><th>Acciones</th></tr></thead>
                   <tbody>
                     {recetas.map(r => (
                       <tr key={r.id_receta}>
-                        <td>{r.id_receta}</td><td>{r.nombre}</td>
+                        <td>{r.nombre}</td>
                         <td>
                           <button className="btn btn-warning btn-sm me-1" onClick={() => cargarDetalleReceta(r.id_receta)}>✏️</button>
                           <button className="btn btn-danger btn-sm" onClick={() => eliminarReceta(r.id_receta)}>🗑️</button>

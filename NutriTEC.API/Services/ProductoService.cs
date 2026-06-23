@@ -51,11 +51,6 @@ namespace NutriTEC.API.Services
 
         public async Task ActualizarProducto(int id, Producto producto)
         {
-            var productoExistente = await _productoRepository.ObtenerProducto(id);
-
-            if (productoExistente == null)
-                throw new KeyNotFoundException("Producto no encontrado.");
-
             if (string.IsNullOrWhiteSpace(producto.Codigo))
                 throw new ArgumentException("El código es obligatorio.");
 

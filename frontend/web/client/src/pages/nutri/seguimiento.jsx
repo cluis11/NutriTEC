@@ -5,8 +5,6 @@ import '../../App.css';
 // CONFIGURACIÓN DE LA API Y CONSTANTES HARCODEADAS
 // ============================================================
 const API_URL = process.env.REACT_APP_API_URL;
-// Simulación del nutricionista logueado actualmente 
-const ID_NUTRICIONISTA_ACTUAL = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
 
 function formatearFechaParaApi(fecha) {
   const y = fecha.getFullYear();
@@ -63,8 +61,9 @@ export default function SeguimientoCliente({ onVolver }) {
     try {
       setCargando(true);
       setMensajeError(null);
-
-      const res = await fetch(`${API_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+      
+      const res = await fetch(`${API_URL}/api/nutricionista/${idNutri}/clientes`);
       if (!res.ok) throw new Error(`Error del servidor (${res.status}): No se pudo obtener la lista de pacientes.`);
       
       const datos = await res.json();
@@ -99,8 +98,9 @@ export default function SeguimientoCliente({ onVolver }) {
       setCargando(true);
       setMensajeError(null);
       const fechaStr = formatearFechaParaApi(fechaConsumo);
-      
-      const res = await fetch(`${API_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/pacientes/${pacienteSeleccionado.id_usuario}/registro?fecha=${fechaStr}`);
+
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;      
+      const res = await fetch(`${API_URL}/api/nutricionista/${idNutri}/pacientes/${pacienteSeleccionado.id_usuario}/registro?fecha=${fechaStr}`);
       if (!res.ok) throw new Error("No se encontraron registros de consumo para este día.");
       
       const datos = await res.json();
@@ -127,7 +127,8 @@ export default function SeguimientoCliente({ onVolver }) {
     try {
       setCargando(true);
       setMensajeError(null);
-      const res = await fetch(`${API_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/paciente/${pacienteSeleccionado.id_usuario}/retroalimentacion`);
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+      const res = await fetch(`${API_URL}/api/nutricionista/${idNutri}/paciente/${pacienteSeleccionado.id_usuario}/retroalimentacion`);
       if (!res.ok) throw new Error("Error al cargar los foros de seguimiento.");
       
       const datos = await res.json();
@@ -152,7 +153,7 @@ export default function SeguimientoCliente({ onVolver }) {
     try {
       setCreandoForo(true);
       const nuevoHilo = {
-        idNutricionista: ID_NUTRICIONISTA_ACTUAL,
+        idNutricionista: JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0,
         idCliente: pacienteSeleccionado.id_usuario,
         asunto: nuevaRetroTitulo.trim(),
         respuestas: [
@@ -164,7 +165,7 @@ export default function SeguimientoCliente({ onVolver }) {
         ]
       };
 
-      const res = await fetch(`${API_URL}/nutricionista/retroalimentacion/crear`, {
+      const res = await fetch(`${API_URL}/api/nutricionista/retroalimentacion/crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevoHilo),
@@ -196,7 +197,8 @@ export default function SeguimientoCliente({ onVolver }) {
         contenido: nuevaRespuestaTexto.trim()
       };
 
-      const res = await fetch(`${API_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/retroalimentacion/responder/${foroSeleccionado.id}`, {
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+      const res = await fetch(`${API_URL}/api/nutricionista/${idNutri}/retroalimentacion/responder/${foroSeleccionado.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(respuestaObj)
@@ -207,7 +209,7 @@ export default function SeguimientoCliente({ onVolver }) {
       setNuevaRespuestaTexto('');
       
       // Refrescar los foros
-      const resForos = await fetch(`${API_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/paciente/${pacienteSeleccionado.id_usuario}/retroalimentacion`);
+      const resForos = await fetch(`${API_URL}/api/nutricionista/${idNutri}/paciente/${pacienteSeleccionado.id_usuario}/retroalimentacion`);
       if (resForos.ok) {
         const forosActualizados = await resForos.json();
         setListaForos(forosActualizados);

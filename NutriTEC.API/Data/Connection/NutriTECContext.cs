@@ -80,6 +80,7 @@ namespace NutriTEC.API.Data
             // Producto
             // ------------------------------------------------------------
             modelBuilder.Entity<Producto>().HasKey(p => p.Id_producto);
+            modelBuilder.Entity<Producto>().ToTable(tb => tb.HasTrigger("trg_RevertirProductoAPendiente"));
             modelBuilder.Entity<Producto>().HasIndex(p => p.Codigo).IsUnique();
             modelBuilder.Entity<Producto>().Property(p => p.Estado).HasDefaultValue("pendiente");
             modelBuilder.Entity<Producto>().Ignore(p => p.Vitaminas);
