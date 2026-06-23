@@ -1,7 +1,10 @@
 -- ============================================================
 -- NutriTEC - Script 03: Datos de prueba
 -- Datos para desarrollo y testing de cada módulo
+-- Nota: Los usuarios base (id 1 y 2) vienen del Script 02
+--       Los usuarios adicionales aquí empiezan desde id 3
 -- ============================================================
+
 
 -- ------------------------------------------------------------
 -- USUARIOS ADICIONALES
@@ -49,7 +52,7 @@ INSERT INTO ClientexNutricionista (id_cliente, id_nutricionista) VALUES
 (9, 4), (10, 4), (11, 4), (12, 4); -- Ana: Pedro, Valeria, Andrés, Camila
 
 -- ------------------------------------------------------------
--- PRODUCTOS
+-- PRODUCTOS (IDs 11-20, distintos a los del Script 02)
 -- ------------------------------------------------------------
 
 INSERT INTO Producto (id_usuario, Codigo, Descripcion, Tamano, Porcion, Energia, Grasa, Sodio, Carbohidratos, Proteina, Calcio, Hierro, Estado) VALUES
@@ -65,16 +68,16 @@ INSERT INTO Producto (id_usuario, Codigo, Descripcion, Tamano, Porcion, Energia,
 (5, '7400010', 'Barra energética ABC',      45.0,  45.0, 200.0,  7.0, 90.0, 28.0,  5.0,  50.0, 1.5, 'pendiente');
 
 INSERT INTO VitaminasxProducto (id_producto, Vitamina) VALUES
-(1, 'B1'), (1, 'B3'),
-(2, 'B1'), (2, 'B6'), (2, 'C'),
-(3, 'B3'), (3, 'B6'),
-(4, 'B1'), (4, 'B2'), (4, 'E'),
-(5, 'A'),  (5, 'D'),  (5, 'B12'),
-(6, 'B6'), (6, 'C'),
-(7, 'B3'), (7, 'B12'), (7, 'D'),
-(8, 'E'),  (8, 'K'),
-(9, 'B6'), (9, 'B12'),
-(10, 'B1'), (10, 'B2'), (10, 'C');
+(11,  'B1'), (11,  'B3'),
+(12,  'B1'), (12,  'B6'), (12,  'C'),
+(13,  'B3'), (13,  'B6'),
+(14,  'B1'), (14,  'B2'), (14,  'E'),
+(15,  'A'),  (15,  'D'),  (15,  'B12'),
+(16,  'B6'), (16,  'C'),
+(17,  'B3'), (17,  'B12'), (17,  'D'),
+(18,  'E'),  (18,  'K'),
+(19,  'B6'), (19,  'B12'),
+(20,  'B1'), (20,  'B2'), (20,  'C');
 
 -- ------------------------------------------------------------
 -- RECETAS
