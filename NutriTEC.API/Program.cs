@@ -6,6 +6,7 @@ using NutriTEC.API.Data;
 using NutriTEC.API.Data.Connection;
 using NutriTEC.API.Data.Repositories;
 using NutriTEC.API.Services;
+using NutriTEC.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +86,7 @@ builder.Services.AddScoped<PlanService>();
 builder.Services.AddScoped<RecetaService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<MedidaService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
 
 // ============================================================
 // PIPELINE

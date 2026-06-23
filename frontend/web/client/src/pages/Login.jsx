@@ -83,13 +83,29 @@ const RegistroNutriForm = ({ onVolver }) => {
   const [form, setForm] = useState({
     correo: "", contrasena: "", nombre: "", ap1: "", ap2: "",
     fecha_nacimiento: "", peso: "", altura: "",
-    cedula: "", codigo: "", cobro: "mensual", tarjeta: "", direccion: ""
+    cedula: "", codigo: "", cobro: "mensual", tarjeta: "", direccion: "", foto: ""
   });
   const [mostrarPass, setMostrarPass] = useState(false);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [fotoPreview, setFotoPreview] = useState(null);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      setError("La foto no puede pesar más de 1 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm({ ...form, foto: reader.result });
+      setFotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -161,6 +177,15 @@ const RegistroNutriForm = ({ onVolver }) => {
         </div>
         <div style={styles.fieldGroup}><label style={styles.label}>Dirección</label>
           <input name="direccion" required style={styles.input} placeholder="San José, Costa Rica" value={form.direccion} onChange={handleChange} /></div>
+        <div style={styles.fieldGroup}>
+          <label style={styles.label}>Foto de perfil (opcional, máx 1 MB)</label>
+          <input type="file" accept="image/*" onChange={handleFotoChange} style={{ ...styles.input, padding: "8px" }} />
+          {fotoPreview && (
+            <div style={{ marginTop: "10px", textAlign: "center" }}>
+              <img src={fotoPreview} alt="Preview" style={{ maxWidth: "100px", maxHeight: "100px", borderRadius: "50%", border: "2px solid #1abc9c" }} />
+            </div>
+          )}
+        </div>
         <button type="submit" style={styles.btnPrimary} disabled={cargando}>{cargando ? "Registrando..." : "Crear cuenta"}</button>
       </form>
       <button style={styles.linkBtn} onClick={onVolver}>← Volver al inicio de sesión</button>

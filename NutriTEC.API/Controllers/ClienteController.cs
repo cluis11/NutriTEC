@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using NutriTEC.API.DTOs;
 using NutriTEC.API.Models;
 using NutriTEC.API.Services;
-using NutriTEC.API.DTOs;
-
 
 namespace NutriTEC.API.Controllers
 {
@@ -81,7 +80,6 @@ namespace NutriTEC.API.Controllers
         [HttpGet("{id}/medidas/reporte")]
         public Task<IActionResult> ObtenerReporteAvance(int id, [FromQuery] DateTime fecha_inicio, [FromQuery] DateTime fecha_fin) => throw new NotImplementedException();
 
-   
         [HttpGet("{id}/registro")]
         public async Task<IActionResult> ObtenerRegistroDiario(int id, [FromQuery] DateTime fecha)
         {
@@ -115,10 +113,56 @@ namespace NutriTEC.API.Controllers
         }
 
         [HttpPost("{id}/registro/plan")]
-        public Task<IActionResult> RegistrarDesdePlan(int id, [FromBody] object request) => throw new NotImplementedException();
+        public async Task<IActionResult> RegistrarDesdePlan(int id, [FromBody] RegistrarDesdePlanDTO request)
+        {
+            try
+            {
+                var resultado = await _clienteService.RegistrarDesdePlan(id, request.Fecha, request.Tiempo);
+                return Ok(new {
+                    success = true,
+                    excedido = resultado.Excedido,
+                    mensaje = resultado.Excedido ? resultado.MensajeAlerta : "¡Plan registrado con éxito!"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = $"Error al registrar desde plan: {ex.Message}" });
+            }
+        }
 
         [HttpPost("{id}/registro/receta")]
-        public Task<IActionResult> RegistrarDesdeReceta(int id, [FromBody] object request) => throw new NotImplementedException();
+        public async Task<IActionResult> RegistrarDesdeReceta(int id, [FromBody] RegistrarDesdeRecetaDTO request)
+        {
+            try
+            {
+                var resultado = await _clienteService.RegistrarDesdeReceta(id, request.Fecha, request.Tiempo, request.Id_receta);
+                return Ok(new {
+                    success = true,
+                    excedido = resultado.Excedido,
+                    mensaje = resultado.Excedido ? resultado.MensajeAlerta : "¡Receta registrada con éxito!"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = $"Error al registrar desde receta: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("{id}/plan-activo")]
+        public async Task<IActionResult> ObtenerPlanActivo(int id)
+        {
+            try
+            {
+                var plan = await _clienteService.ObtenerPlanActivoConProductos(id);
+                if (plan == null)
+                    return NotFound(new { mensaje = "El cliente no tiene un plan activo." });
+                return Ok(plan);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = ex.Message });
+            }
+        }
 
         // ============================================================
         // ENDPOINTS DE MONGO DB ATLAS (SEGUIMIENTO / FORO - LADO CLIENTE)

@@ -6,6 +6,7 @@ const Cobros = () => {
   const [reporte, setReporte] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [descargando, setDescargando] = useState(false);
 
   const cargarReporte = async () => {
     try {
@@ -23,7 +24,27 @@ const Cobros = () => {
 
   useEffect(() => { cargarReporte(); }, []);
 
-  const handleExportarPDF = () => window.print();
+  const handleExportarPDF = async () => {
+    try {
+      setDescargando(true);
+      const response = await fetch(`${API_URL}/api/admin/reporte-cobro/pdf`);
+      if (!response.ok) throw new Error("Error al descargar el PDF");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte_cobro_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Error al generar PDF: ${err.message}`);
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   const badgeColor = (tipo) => {
     if (tipo === 'semanal') return 'bg-primary';
@@ -42,8 +63,12 @@ const Cobros = () => {
       <div className="bg-white rounded-3 shadow-sm p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h5 className="fw-bold mb-0" style={{ color: "#1e293b" }}>Nutricionistas activos</h5>
-          <button className="btn btn-danger btn-sm px-3" onClick={handleExportarPDF}>
-            🖨️ Exportar PDF
+          <button
+            className="btn btn-danger btn-sm px-3"
+            onClick={handleExportarPDF}
+            disabled={descargando || reporte.length === 0}
+          >
+            {descargando ? "⏳ Generando..." : "📄 Descargar PDF"}
           </button>
         </div>
 

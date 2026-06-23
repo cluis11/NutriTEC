@@ -27,10 +27,8 @@ namespace NutriTEC.API.Services
         public async Task<Cliente> ObtenerPerfil(int id)
         {
             var cliente = await _clienteRepository.ObtenerCliente(id);
-
             if (cliente == null)
                 throw new KeyNotFoundException("Cliente no encontrado");
-
             return cliente;
         }
 
@@ -106,15 +104,31 @@ namespace NutriTEC.API.Services
             return (excedido, mensajeAlerta);
         }
 
-        public Task RegistrarProducto(int id_cliente, DateTime fecha, string tiempo, int id_producto, decimal cantidad) => throw new NotImplementedException();
-        public Task RegistrarDesdePlan(int id_cliente, DateTime fecha, string tiempo) => throw new NotImplementedException();
-        public Task RegistrarDesdeReceta(int id_cliente, DateTime fecha, string tiempo, int id_receta) => throw new NotImplementedException();
+        // ============================================================
+        // REGISTRO DESDE PLAN Y RECETA (nuevos)
+        // ============================================================
+
+        public async Task<(bool Excedido, string MensajeAlerta)> RegistrarDesdePlan(int idCliente, DateTime fecha, string tiempo)
+        {
+            await _clienteRepository.RegistrarDesdePlan(idCliente, fecha, tiempo);
+            return await _clienteRepository.ExcesoCalorico(idCliente, fecha);
+        }
+
+        public async Task<(bool Excedido, string MensajeAlerta)> RegistrarDesdeReceta(int idCliente, DateTime fecha, string tiempo, int idReceta)
+        {
+            await _clienteRepository.RegistrarDesdeReceta(idCliente, fecha, tiempo, idReceta);
+            return await _clienteRepository.ExcesoCalorico(idCliente, fecha);
+        }
+
+        public async Task<PlanActivoConProductosDTO?> ObtenerPlanActivoConProductos(int idCliente)
+        {
+            return await _clienteRepository.ObtenerPlanActivoConProductos(idCliente);
+        }
 
         // ============================================================
         // SERVICIOS MONGODB ATLAS (FORO - LADO CLIENTE)
         // ============================================================
 
-        // El cliente solo puede ver los foros que le pertenecen a el mismo
         public async Task<List<Retroalimentacion>> ObtenerForoPropio(int id_cliente)
         {
             return await _clienteRepository.ObtenerForosPorPaciente(id_cliente);
