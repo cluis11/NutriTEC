@@ -31,6 +31,14 @@ interface Producto {
   codigoBarras?: any;
 }
 
+interface Receta {
+  id_receta?: number;
+  id?: number;
+  nombre?: string;
+  energiaTotal?: number;
+  energia?: number;
+}
+
 interface Props {
   navigation: any; 
   route: any; 
@@ -57,7 +65,8 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
   
   const [listaProductos, setListaProductos] = useState<Producto[]>([]);
   const [filtroAlimento, setFiltroAlimento] = useState<string>('');
-  const [alimentoSeleccionado, setAlimentoSeleccionado] = useState<Producto | null>(null);
+  const [listaRecetas, setListaRecetas] = useState<Receta[]>([]);
+  const [alimentoSeleccionado, setAlimentoSeleccionado] = useState<any>(null);
 
   const opcionesTiempos = [
     { value: 'desayuno', label: 'Desayuno' },
@@ -111,6 +120,25 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
     cargarProductosAPI();
   }, []);
 
+  useEffect(() => {
+    const cargarRecetasCliente = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/receta/cliente/${idClienteLogueado}`
+        );
+
+        if (response.ok) {
+          const datos = await response.json();
+          setListaRecetas(datos);
+        }
+      } catch (error) {
+        console.error("Error cargando recetas del cliente:", error);
+      }
+    };
+
+    cargarRecetasCliente();
+  }, [idClienteLogueado]);
+
 
   const cargarConsumoDiarioAPI = async () => {
     setLoading(true);
@@ -157,44 +185,105 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
 
   const handleInsertarComida = async () => {
     if (!alimentoSeleccionado) {
-      Alert.alert('Selección requerida', 'Por favor, busque y seleccione un producto de la lista.');
+      Alert.alert(
+        'Selección requerida',
+        'Por favor, busque y seleccione un producto o receta.'
+      );
       return;
     }
 
-    const idProducto = alimentoSeleccionado.id_producto || alimentoSeleccionado.id;
     const cantidadNumerica = parseFloat(porcionComida) || 1;
 
-    const datosRegistro = {
-      id_cliente: idClienteLogueado,
-      idCliente: idClienteLogueado, 
-      fecha: fechaSeleccionadaStr,
-      tiempo: nuevoTiempo.toLowerCase().trim(),
-      id_producto: idProducto,
-      idProducto: idProducto,     
-      cantidad: cantidadNumerica
-    };
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cliente/${idClienteLogueado}/registro`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datosRegistro)
-      });
+      if (alimentoSeleccionado.tipo === 'receta') {
+        const idReceta = alimentoSeleccionado.id_receta || alimentoSeleccionado.id;
 
-      if (response.ok) {
-        Alert.alert('¡Éxito!', 'Alimento registrado correctamente en NutriTEC.');
-        
-        setFiltroAlimento('');
-        setAlimentoSeleccionado(null);
-        setPorcionComida('1');
+        const responseReceta = await fetch(`${API_BASE_URL}/api/receta/${idReceta}`);
 
-        await cargarConsumoDiarioAPI();
+        if (!responseReceta.ok) {
+          Alert.alert('Error', 'No se pudo obtener el detalle de la receta.');
+          return;
+        }
+
+        const recetaDetalle = await responseReceta.json();
+
+        if (!recetaDetalle.productos || recetaDetalle.productos.length === 0) {
+          Alert.alert('Error', 'La receta no tiene productos registrados.');
+          return;
+        }
+
+        for (const producto of recetaDetalle.productos) {
+          const datosRegistro = {
+            id_cliente: idClienteLogueado,
+            idCliente: idClienteLogueado,
+            fecha: fechaSeleccionadaStr,
+            tiempo: nuevoTiempo.toLowerCase().trim(),
+            id_producto: producto.id_producto,
+            idProducto: producto.id_producto,
+            cantidad: Number(producto.cantidad) * cantidadNumerica
+          };
+
+          const response = await fetch(
+            `${API_BASE_URL}/api/cliente/${idClienteLogueado}/registro`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(datosRegistro)
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            Alert.alert(
+              'Error',
+              errorData?.mensaje || 'No se pudo registrar uno de los productos de la receta.'
+            );
+            return;
+          }
+        }
+
+        Alert.alert('¡Éxito!', 'Receta registrada como productos individuales.');
       } else {
-        const errorData = await response.json().catch(() => null);
-        Alert.alert('Error', errorData?.mensaje || 'No se pudo registrar la comida en el servidor.');
+        const idProducto = alimentoSeleccionado.id_producto || alimentoSeleccionado.id;
+
+        const datosRegistro = {
+          id_cliente: idClienteLogueado,
+          idCliente: idClienteLogueado,
+          fecha: fechaSeleccionadaStr,
+          tiempo: nuevoTiempo.toLowerCase().trim(),
+          id_producto: idProducto,
+          idProducto: idProducto,
+          cantidad: cantidadNumerica
+        };
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/cliente/${idClienteLogueado}/registro`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosRegistro)
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          Alert.alert(
+            'Error',
+            errorData?.mensaje || 'No se pudo registrar la comida en el servidor.'
+          );
+          return;
+        }
+
+        Alert.alert('¡Éxito!', 'Alimento registrado correctamente en NutriTEC.');
       }
+
+      setFiltroAlimento('');
+      setAlimentoSeleccionado(null);
+      setPorcionComida('1');
+
+      await cargarConsumoDiarioAPI();
     } catch (err) {
-      console.log("Error al sincronizar con el backend:", err);
+      console.log('Error al sincronizar con el backend:', err);
       Alert.alert('Error de conexión', 'No hay respuesta del servidor local.');
     }
   };
@@ -236,12 +325,24 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
   
   const comidasFiltradasDia = comidasAsignadas.filter(c => c.fecha === fechaSeleccionadaStr);
 
-  const sugerenciasProductos = filtroAlimento.trim() === '' ? [] : listaProductos.filter(prod => {
-    const termino = filtroAlimento.toLowerCase();
-    const cumpleNombre = prod.nombre?.toLowerCase().includes(termino) || prod.descripcion?.toLowerCase().includes(termino);
-    const cumpleCodigo = prod.codigoBarras?.toString().includes(termino);
-    return cumpleNombre || cumpleCodigo;
-  });
+  const sugerenciasProductos = filtroAlimento.trim() === '' ? [] : [
+    ...listaProductos
+      .filter(prod => {
+        const termino = filtroAlimento.toLowerCase();
+        return (
+          prod.nombre?.toLowerCase().includes(termino) ||
+          prod.descripcion?.toLowerCase().includes(termino) ||
+          prod.codigoBarras?.toString().includes(termino)
+        );
+      })
+      .map(prod => ({ ...prod, tipo: 'producto' })),
+
+    ...listaRecetas
+      .filter(receta =>
+        receta.nombre?.toLowerCase().includes(filtroAlimento.toLowerCase())
+      )
+      .map(receta => ({ ...receta, tipo: 'receta' }))
+  ];
 
   return (
     <SafeAreaView style={[{ flex: 1, backgroundColor: '#FFF' }, Platform.OS === 'android' && { paddingTop: 40 }]}>
@@ -355,19 +456,33 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
               {/* Lista de Recomendaciones de productos*/}
               {sugerenciasProductos.length > 0 && (
                 <View style={{ backgroundColor: '#FFF', borderColor: '#BDC3C7', borderWidth: 1, borderRadius: 6, marginTop: 4, maxHeight: 150, overflow: 'scroll' }}>
-                  {sugerenciasProductos.map((prod) => {
-                    const nombreProd = prod.descripcion || prod.nombre || '';
+                  {sugerenciasProductos.map((prod: any) => {
+                    const esReceta = prod.tipo === 'receta';
+
+                    const nombreProd = esReceta
+                      ? prod.nombre || ''
+                      : prod.descripcion || prod.nombre || '';
+
+                    const keyItem = esReceta
+                      ? `receta-${prod.id_receta || prod.id}`
+                      : `producto-${prod.id_producto || prod.id}`;
+
                     return (
                       <TouchableOpacity
-                        key={prod.id_producto || prod.id}
+                        key={keyItem}
                         style={{ padding: 10, borderBottomWidth: 1, borderColor: '#ECF0F1' }}
                         onPress={() => {
                           setAlimentoSeleccionado(prod);
                           setFiltroAlimento(nombreProd);
                         }}
                       >
-                        <Text style={{ color: '#2C3E50', fontWeight: '500' }}>{nombreProd}</Text>
-                        <Text style={{ color: '#7F8C8D', fontSize: 11 }}>🔥 {prod.energia} kcal</Text>
+                        <Text style={{ color: '#2C3E50', fontWeight: '500' }}>
+                          {nombreProd}
+                        </Text>
+
+                        <Text style={{ color: '#7F8C8D', fontSize: 11 }}>
+                          {esReceta ? '🍽 Receta' : `🔥 ${prod.energia} kcal`}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
