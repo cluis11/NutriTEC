@@ -9,6 +9,7 @@ import RegistroMedidas from './insertMedida';
 import GestionRecetas from './GestionRecetas';
 import ReporteAvance from './reporte';
 import Retroalimentacion from './retroalimentacion';
+import MiPlan from './MiPlan';
 
 const ClientMain = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const ClientMain = () => {
   const [comidasAsignadas, setComidasAsignadas] = useState([]);
   const [fechaPivote, setFechaPivote] = useState(new Date());
 
+  const [tipoRegistro, setTipoRegistro] = useState('producto'); // producto | receta | plan
   const [fechaComida, setFechaComida] = useState(new Date().toISOString().split('T')[0]);
   const [tiempoComida, setTiempoComida] = useState('desayuno');
   const [porcionComida, setPorcionComida] = useState(1);
@@ -28,6 +30,9 @@ const ClientMain = () => {
   const [filtroAlimento, setFiltroAlimento] = useState('');
   const [alimentoSeleccionado, setAlimentoSeleccionado] = useState(null);
   const [listaAlimentos, setListaAlimentos] = useState([]);
+
+  const [recetas, setRecetas] = useState([]);
+  const [recetaSeleccionada, setRecetaSeleccionada] = useState('');
 
   useEffect(() => {
     const cargarProductosAPI = async () => {
@@ -45,13 +50,28 @@ const ClientMain = () => {
   }, []);
 
   useEffect(() => {
+    const cargarRecetas = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/receta/cliente/${idClienteLogueado}`);
+        if (response.ok) {
+          const datos = await response.json();
+          setRecetas(datos);
+        }
+      } catch (error) {
+        console.error("Error al cargar recetas:", error);
+      }
+    };
+    cargarRecetas();
+  }, [idClienteLogueado]);
+
+  useEffect(() => {
     cargarConsumoDiarioAPI();
   }, [fechaPivote, idClienteLogueado]);
 
   const cargarConsumoDiarioAPI = async () => {
     try {
       const diasSemanaActual = obtenerDiasDeLaSemana(fechaPivote);
-      
+
       const formatearFechaISO = (objetoFecha) => {
         const yyyy = objetoFecha.getFullYear();
         const mm = String(objetoFecha.getMonth() + 1).padStart(2, '0');
@@ -91,7 +111,7 @@ const ClientMain = () => {
           });
         }
       });
-      
+
       setComidasAsignadas([...listaPlanaFormateada]);
       setCaloriasTotales(caloriasDiaSeleccionado);
     } catch (error) {
@@ -148,35 +168,74 @@ const ClientMain = () => {
   const mesEncabezado = nombresMeses[diasDeEstaSemana[0].getMonth()];
   const añoEncabezado = diasDeEstaSemana[0].getFullYear();
 
-  const handleRegistrarComida = async (e) => {
+  const handleRegistrar = async (e) => {
     e.preventDefault();
-    if (!alimentoSeleccionado) {
-      alert("Seleccioná un alimento de la lista.");
-      return;
-    }
     try {
-      const body = {
-        id_cliente: idClienteLogueado,
-        fecha: fechaComida,
-        tiempo: tiempoComida,
-        id_producto: alimentoSeleccionado.id_producto,
-        cantidad: parseFloat(porcionComida)
-      };
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro`, {
+      let url, body, msg;
+
+      if (tipoRegistro === 'producto') {
+        if (!alimentoSeleccionado) {
+          alert("Seleccioná un alimento de la lista.");
+          return;
+        }
+        url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro`;
+        body = {
+          id_cliente: idClienteLogueado,
+          fecha: fechaComida,
+          tiempo: tiempoComida,
+          id_producto: alimentoSeleccionado.id_producto,
+          cantidad: parseFloat(porcionComida)
+        };
+        msg = "producto";
+      } else if (tipoRegistro === 'receta') {
+        if (!recetaSeleccionada) {
+          alert("Seleccioná una receta.");
+          return;
+        }
+        url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro/receta`;
+        body = {
+          fecha: fechaComida,
+          tiempo: tiempoComida,
+          id_receta: parseInt(recetaSeleccionada)
+        };
+        msg = "receta";
+      } else if (tipoRegistro === 'plan') {
+        if (!usuario.plan_activo) {
+          alert("No tenés un plan activo.");
+          return;
+        }
+        url = `${process.env.REACT_APP_API_URL}/api/cliente/${idClienteLogueado}/registro/plan`;
+        body = {
+          fecha: fechaComida,
+          tiempo: tiempoComida
+        };
+        msg = "plan";
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+
+      const data = await response.json();
       if (response.ok) {
+        if (data.excedido) {
+          alert(data.mensaje);
+        } else {
+          alert(data.mensaje || `¡${msg} registrado con éxito!`);
+        }
         setFiltroAlimento('');
         setAlimentoSeleccionado(null);
+        setRecetaSeleccionada('');
         setPorcionComida(1);
         cargarConsumoDiarioAPI();
       } else {
-        alert("Error al registrar la comida.");
+        alert(data.mensaje || `Error al registrar ${msg}.`);
       }
     } catch (error) {
-      console.error("Error al registrar comida:", error);
+      console.error("Error al registrar:", error);
+      alert("Error de conexión.");
     }
   };
 
@@ -193,6 +252,7 @@ const ClientMain = () => {
       <div className="d-flex gap-2 px-4 pt-3 pb-2 flex-wrap" style={{ borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
         {[
           { key: 'dashboard', label: '📅 Registro Diario' },
+          { key: 'mi-plan', label: '📋 Mi Plan' },
           { key: 'medida', label: '📏 Medidas' },
           { key: 'productos', label: '🥦 Productos' },
           { key: 'recetas', label: '🍽️ Recetas' },
@@ -288,8 +348,16 @@ const ClientMain = () => {
 
             <div className="col-12 col-md-6 col-lg-3">
               <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
-                <h4 className="fw-bold mb-3" style={{ color: "#2c3e50" }}>Registrar alimento</h4>
-                <form onSubmit={handleRegistrarComida}>
+                <h4 className="fw-bold mb-3" style={{ color: "#2c3e50" }}>Registrar</h4>
+                <form onSubmit={handleRegistrar}>
+                  <div className="mb-2">
+                    <label className="form-label small fw-semibold text-secondary mb-1">Tipo:</label>
+                    <select className="form-select form-select-sm" value={tipoRegistro} onChange={(e) => setTipoRegistro(e.target.value)}>
+                      <option value="producto">🥦 Producto</option>
+                      <option value="receta">🍽️ Receta</option>
+                      <option value="plan" disabled={!usuario.plan_activo}>📋 Plan {!usuario.plan_activo && "(sin plan)"}</option>
+                    </select>
+                  </div>
                   <div className="mb-2">
                     <label className="form-label small fw-semibold text-secondary mb-1">Fecha:</label>
                     <input type="date" className="form-control form-control-sm" value={fechaComida} onChange={(e) => setFechaComida(e.target.value)} required />
@@ -304,30 +372,57 @@ const ClientMain = () => {
                       <option value="cena">Cena</option>
                     </select>
                   </div>
-                  <div className="mb-2 position-relative">
-                    <label className="form-label small fw-semibold text-secondary mb-1">Producto:</label>
-                    <input
-                      type="text" className="form-control form-control-sm"
-                      value={filtroAlimento} placeholder="Buscar por nombre o código..."
-                      onChange={(e) => { setFiltroAlimento(e.target.value); if (alimentoSeleccionado) setAlimentoSeleccionado(null); }}
-                      autoComplete="off" required
-                    />
-                    {sugerenciasAlimentos.length > 0 && (
-                      <ul className="list-group position-absolute w-100 shadow-sm mt-1" style={{ zIndex: 1000, maxHeight: "180px", overflowY: "auto" }}>
-                        {sugerenciasAlimentos.map((alimento) => (
-                          <button key={alimento.id_producto} type="button"
-                            className="list-group-item list-group-item-action text-start small p-2"
-                            onClick={() => { setAlimentoSeleccionado(alimento); setFiltroAlimento(alimento.descripcion); }}>
-                            <div className="fw-bold">{alimento.descripcion}</div>
-                          </button>
+
+                  {tipoRegistro === 'producto' && (
+                    <>
+                      <div className="mb-2 position-relative">
+                        <label className="form-label small fw-semibold text-secondary mb-1">Producto:</label>
+                        <input
+                          type="text" className="form-control form-control-sm"
+                          value={filtroAlimento} placeholder="Buscar por nombre o código..."
+                          onChange={(e) => { setFiltroAlimento(e.target.value); if (alimentoSeleccionado) setAlimentoSeleccionado(null); }}
+                          autoComplete="off" required
+                        />
+                        {sugerenciasAlimentos.length > 0 && (
+                          <ul className="list-group position-absolute w-100 shadow-sm mt-1" style={{ zIndex: 1000, maxHeight: "180px", overflowY: "auto" }}>
+                            {sugerenciasAlimentos.map((alimento) => (
+                              <button key={alimento.id_producto} type="button"
+                                className="list-group-item list-group-item-action text-start small p-2"
+                                onClick={() => { setAlimentoSeleccionado(alimento); setFiltroAlimento(alimento.descripcion); }}>
+                                <div className="fw-bold">{alimento.descripcion}</div>
+                              </button>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small fw-semibold text-secondary mb-1">Porción (g):</label>
+                        <input type="number" className="form-control form-control-sm" value={porcionComida} onChange={(e) => setPorcionComida(e.target.value)} required />
+                      </div>
+                    </>
+                  )}
+
+                  {tipoRegistro === 'receta' && (
+                    <div className="mb-2">
+                      <label className="form-label small fw-semibold text-secondary mb-1">Receta:</label>
+                      <select className="form-select form-select-sm" value={recetaSeleccionada} onChange={(e) => setRecetaSeleccionada(e.target.value)} required>
+                        <option value="">Seleccioná una receta</option>
+                        {recetas.map(r => (
+                          <option key={r.id_receta} value={r.id_receta}>{r.nombre}</option>
                         ))}
-                      </ul>
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label small fw-semibold text-secondary mb-1">Porción (g):</label>
-                    <input type="number" className="form-control form-control-sm" value={porcionComida} onChange={(e) => setPorcionComida(e.target.value)} required />
-                  </div>
+                      </select>
+                      {recetas.length === 0 && (
+                        <small className="text-muted">No tenés recetas. Creá una en "Recetas".</small>
+                      )}
+                    </div>
+                  )}
+
+                  {tipoRegistro === 'plan' && usuario.plan_activo && (
+                    <div className="alert alert-info py-2 small mb-2">
+                      Se registrarán los productos del plan <strong>{usuario.plan_activo.nombre}</strong> para el tiempo seleccionado.
+                    </div>
+                  )}
+
                   <button type="submit" className="btn w-100 fw-semibold text-white shadow-sm py-2" style={{ backgroundColor: "#1abc9c", border: "none" }}>
                     Añadir
                   </button>
@@ -345,6 +440,7 @@ const ClientMain = () => {
 
         {vistaActiva !== 'dashboard' && (
           <div className="col-12">
+            {vistaActiva === 'mi-plan' && <MiPlan />}
             {vistaActiva === 'medida' && <RegistroMedidas />}
             {vistaActiva === 'productos' && <Productos />}
             {vistaActiva === 'reporte' && <ReporteAvance />}
