@@ -42,7 +42,11 @@ namespace NutriTEC.API.Services
                 if (await _clienteRepository.CorreoExiste(cliente.Correo))
                     throw new InvalidOperationException("El correo ya está registrado");
 
-            cliente.Contrasena = BCrypt.Net.BCrypt.HashPassword(cliente.Contrasena);
+            if (!string.IsNullOrWhiteSpace(cliente.Contrasena))
+                cliente.Contrasena = BCrypt.Net.BCrypt.HashPassword(cliente.Contrasena);
+            else
+                cliente.Contrasena = await _clienteRepository.ObtenerContrasena(id);
+
             cliente.Id_usuario = id;
 
             await _clienteRepository.ActualizarCliente(cliente);

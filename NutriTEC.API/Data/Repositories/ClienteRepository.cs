@@ -80,6 +80,13 @@ namespace NutriTEC.API.Data.Repositories
             return cliente;
         }
 
+        public async Task<string> ObtenerContrasena(int id)
+        {
+            var usuario = await _context.Usuario
+                .FirstOrDefaultAsync(u => u.Id_usuario == id);
+            return usuario?.Contrasena ?? string.Empty;
+        }
+
         public async Task ActualizarCliente(Cliente cliente)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();

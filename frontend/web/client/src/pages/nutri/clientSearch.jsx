@@ -48,7 +48,7 @@ const ClientSearch = () => {
     try {
       setMensaje(null);
       const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
-      const res = await fetch(`${API_BASE_URL}/api/nutricionista/${idNutri}/pacientes`, {
+      const res = await fetch(`${API_BASE_URL}/api/nutricionista/${idNutri}/clientes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(idCliente)
