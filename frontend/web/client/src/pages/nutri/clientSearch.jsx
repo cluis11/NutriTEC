@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import '../../App.css'; 
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
-// Simulación del nutricionista logueado actualmente
-const ID_NUTRICIONISTA_ACTUAL = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
 
 const ClientSearch = () => {
   const [pacientesAsociados, setPacientesAsociados] = useState([]);
@@ -23,7 +21,7 @@ const ClientSearch = () => {
   const cargarClientesDisponibles = async () => {
     try {
       setCargando(true);
-      const res = await fetch(`${API_BASE_URL}/nutricionista/disponibles`);
+      const res = await fetch(`${API_BASE_URL}/api/nutricionista/disponibles`);
       if (!res.ok) throw new Error("No se pudieron obtener los clientes disponibles.");
       const datos = await res.json();
       setClientesDisponibles(datos);
@@ -36,7 +34,8 @@ const ClientSearch = () => {
 
   const cargarPacientesAsociados = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+      const res = await fetch(`${API_BASE_URL}/api/nutricionista/${idNutri}/clientes`);
       if (!res.ok) throw new Error("No se pudieron obtener tus pacientes activos.");
       const datos = await res.json();
       setPacientesAsociados(datos);
@@ -48,7 +47,8 @@ const ClientSearch = () => {
   const handleAsignarCliente = async (idCliente, nombreCliente) => {
     try {
       setMensaje(null);
-      const res = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/pacientes`, {
+      const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+      const res = await fetch(`${API_BASE_URL}/api/nutricionista/${idNutri}/pacientes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(idCliente)

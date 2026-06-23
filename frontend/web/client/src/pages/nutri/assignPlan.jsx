@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import '../../App.css'; 
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
-const ID_NUTRICIONISTA_ACTUAL = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
 
 const NOMBRES_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -48,11 +47,12 @@ const NutricionistaDashboard = () => {
       try {
         setCargando(true);
         // Cargar Pacientes Asociados
-        const resPacientes = await fetch(`${API_BASE_URL}/nutricionista/${ID_NUTRICIONISTA_ACTUAL}/clientes`);
+        const idNutri = JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0;
+        const resPacientes = await fetch(`${API_BASE_URL}/api/nutricionista/${idNutri}/clientes`);
         if (resPacientes.ok) setPacientes(await resPacientes.json());
 
         // Cargar Planes del Nutricionista
-        const resPlanes = await fetch(`${API_BASE_URL}/plan/nutricionista/${ID_NUTRICIONISTA_ACTUAL}`);
+        const resPlanes = await fetch(`${API_BASE_URL}/api/plan/nutricionista/${idNutri}`);
         if (resPlanes.ok) setPlanes(await resPlanes.json());
       } catch (err) {
         console.error("Error cargando catálogos principales:", err);
@@ -71,7 +71,7 @@ const NutricionistaDashboard = () => {
         return;
       }
       try {
-        const res = await fetch(`${API_BASE_URL}/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
+        const res = await fetch(`${API_BASE_URL}/api/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
         if (res.ok) {
           const datosAsignaciones = await res.json();
           setAsignacionesBackend(datosAsignaciones);
@@ -101,7 +101,7 @@ const NutricionistaDashboard = () => {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/plan/asignar`, {
+      const res = await fetch(`${API_BASE_URL}/api/plan/asignar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -116,7 +116,7 @@ const NutricionistaDashboard = () => {
         setPlanSeleccionado("");
 
         // Refrescar la agenda con la nueva ruta limpia
-        const resAgenda = await fetch(`${API_BASE_URL}/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
+        const resAgenda = await fetch(`${API_BASE_URL}/api/nutricionista/cliente/${pacienteSeleccionado}/asignaciones`);
         if (resAgenda.ok) setAsignacionesBackend(await resAgenda.json());
 
       } else {
