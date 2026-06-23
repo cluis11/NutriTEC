@@ -252,7 +252,7 @@ export default function ClientDashboardScreen({ navigation, route }: Props) {
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2C3E50' }}></Text>
             <TouchableOpacity 
               style={{ backgroundColor: '#F39C12', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
-              onPress={() => navigation.navigate('RecetasCliente', { idCliente: idClienteLogueado })}
+              onPress={() => navigation.navigate('GestionRecetas', { idCliente: idClienteLogueado })}
             >
               <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 11 }}>🍳 Recetas</Text>
             </TouchableOpacity>
