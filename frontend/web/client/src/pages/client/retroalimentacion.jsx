@@ -4,10 +4,10 @@ import '../../App.css';
 // ============================================================
 // CONFIGURACIÓN DE LA API
 // ============================================================
-const API_URL = 'http://localhost:5108/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export default function Retroalimentacion() {
-  const [idClienteLogueado] = useState(localStorage.getItem('idCliente') || 4);
+  const [idClienteLogueado] = useState(JSON.parse(localStorage.getItem('usuario'))?.id_usuario || 0);
 
   // -----------------------------------------------------------------
   // ESTADOS
@@ -28,7 +28,7 @@ export default function Retroalimentacion() {
       setCargandoForos(true);
       setMensajeError(null);
 
-      const res = await fetch(`${API_URL}/cliente/${idClienteLogueado}/retroalimentacion`, {
+      const res = await fetch(`${API_URL}/api/cliente/${idClienteLogueado}/retroalimentacion`, {
         signal: AbortSignal.timeout(10000)
       });
       if (!res.ok) throw new Error("Error al cargar tus foros de seguimiento.");
@@ -71,7 +71,7 @@ export default function Retroalimentacion() {
       };
 
       const res = await fetch(
-        `${API_URL}/cliente/${idClienteLogueado}/retroalimentacion/responder/${foroSeleccionado.id}`,
+        `${API_URL}/api/cliente/${idClienteLogueado}/retroalimentacion/responder/${foroSeleccionado.id}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -88,7 +88,7 @@ export default function Retroalimentacion() {
       setNuevaRespuestaTexto('');
 
       // Refrescar los foros para traer la respuesta recién guardada
-      const resForos = await fetch(`${API_URL}/cliente/${idClienteLogueado}/retroalimentacion`);
+      const resForos = await fetch(`${API_URL}/api/cliente/${idClienteLogueado}/retroalimentacion`);
       if (resForos.ok) {
         const forosActualizados = await resForos.json();
         setListaForos(forosActualizados);
