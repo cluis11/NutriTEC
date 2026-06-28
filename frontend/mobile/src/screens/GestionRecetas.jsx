@@ -9,7 +9,7 @@ import {
   Alert
 } from "react-native";
 
-const API_BASE_URL = "http://localhost:5108";
+const API_BASE_URL = "https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net";
 
 function GestionRecetas({ navigation }) {
   const [idCliente, setIdCliente] = useState("4");
@@ -171,6 +171,43 @@ function GestionRecetas({ navigation }) {
     }
   };
 
+  const eliminarReceta = async (idReceta) => {
+    Alert.alert(
+      "Eliminar receta",
+      "¿Desea eliminar esta receta?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(
+                `${API_BASE_URL}/api/receta/${idReceta}`,
+                {
+                  method: "DELETE"
+                }
+              );
+
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.mensaje || "No se pudo eliminar la receta.");
+              }
+
+              Alert.alert("Éxito", "Receta eliminada correctamente.");
+              buscarRecetasPorCliente();
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                error instanceof Error ? error.message : "Error al eliminar receta."
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const productosFiltrados =
     filtroProducto.trim() === ""
       ? []
@@ -217,8 +254,19 @@ function GestionRecetas({ navigation }) {
         ) : (
           recetas.map((receta) => (
             <View key={receta.id_receta} style={styles.listItem}>
-              <Text style={styles.itemTitle}>{receta.nombre}</Text>
-              <Text style={styles.itemSubtitle}>ID receta: {receta.id_receta}</Text>
+              <View style={styles.recipeRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemTitle}>{receta.nombre}</Text>
+                  <Text style={styles.itemSubtitle}>ID receta: {receta.id_receta}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.deleteSmallButton}
+                  onPress={() => eliminarReceta(receta.id_receta)}
+                >
+                  <Text style={styles.deleteText}>🗑️</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         )}
@@ -472,6 +520,21 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 16
+  },
+
+  recipeRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+
+  deleteSmallButton: {
+    backgroundColor: "#E74C3C",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8
   },
 });
 

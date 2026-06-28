@@ -32,7 +32,8 @@ export default function LoginScreen({ navigation }: Props) {
     let loginExitoso = false; 
 
     try {
-      const API_URL = 'http://localhost:5108/api/auth/login'; //CAMBIO DE IP POR RED
+      const API_URL =
+      "https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net/api/auth/login";
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -52,10 +53,23 @@ export default function LoginScreen({ navigation }: Props) {
       }
 
       const data = await response.json();
-      
-      loginExitoso = true; 
 
-      const idUsuario = data.id_usuario; 
+      console.log("Respuesta login:", data);
+
+      loginExitoso = true;
+
+      const idUsuario =
+        data.id_usuario ||
+        data.idUsuario ||
+        data.id ||
+        data.usuario?.id_usuario ||
+        data.usuario?.idUsuario ||
+        data.usuario?.id;
+
+      if (!idUsuario) {
+        Alert.alert("Error", "El login fue exitoso, pero no se recibió el ID del usuario.");
+        return;
+      }
 
       Alert.alert(
         '¡Bienvenido!',

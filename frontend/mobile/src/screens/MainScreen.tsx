@@ -13,7 +13,7 @@ import {
 import { styles } from './ClientStyles';
 
 
-const API_BASE_URL = "http://localhost:5108"; 
+const API_BASE_URL = "https://nutritec-api-dkgtbsfbgceue7cm.westus3-01.azurewebsites.net";
 
 interface Comida {
   fecha: string;
